@@ -417,7 +417,7 @@ function bindControls() {
     const dx = mouseLocked ? event.movementX : event.clientX - lastPointer.x;
     const dy = mouseLocked ? event.movementY : event.clientY - lastPointer.y;
     cameraYaw -= dx * 0.004;
-    cameraPitch = THREE.MathUtils.clamp(cameraPitch - dy * 0.003, -0.12, 0.78);
+    cameraPitch = THREE.MathUtils.clamp(cameraPitch - dy * 0.003, -1.35, 0.78);
     lastPointer = { x: event.clientX, y: event.clientY };
   });
   renderer.domElement.addEventListener('pointerup', () => { draggingCamera = false; });
@@ -458,7 +458,7 @@ function bindControls() {
     if (!cameraTouch || event.touches.length < 2) return;
     const touch = event.touches[0];
     cameraYaw -= (touch.clientX - cameraTouch.x) * 0.006;
-    cameraPitch = THREE.MathUtils.clamp(cameraPitch + (touch.clientY - cameraTouch.y) * 0.004, -0.12, 0.78);
+    cameraPitch = THREE.MathUtils.clamp(cameraPitch + (touch.clientY - cameraTouch.y) * 0.004, -1.35, 0.78);
     cameraTouch = { x: touch.clientX, y: touch.clientY };
   }, { passive: true });
   renderer.domElement.addEventListener('touchend', () => { cameraTouch = null; }, { passive: true });

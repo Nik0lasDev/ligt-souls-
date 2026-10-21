@@ -417,7 +417,7 @@ function bindControls() {
     const dx = mouseLocked ? event.movementX : event.clientX - lastPointer.x;
     const dy = mouseLocked ? event.movementY : event.clientY - lastPointer.y;
     cameraYaw -= dx * 0.004;
-    cameraPitch = THREE.MathUtils.clamp(cameraPitch + dy * 0.003, -0.12, 0.78);
+    cameraPitch = THREE.MathUtils.clamp(cameraPitch - dy * 0.003, -0.12, 0.78);
     lastPointer = { x: event.clientX, y: event.clientY };
   });
   renderer.domElement.addEventListener('pointerup', () => { draggingCamera = false; });

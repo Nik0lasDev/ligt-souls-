@@ -131,14 +131,17 @@ function createCastle() {
   wallZ(0, -31, 62, wallY, 11.2, 1.9);
   wallX(-31, 0, 62, wallY, 11.2, 1.9);
   wallX(31, 0, 62, wallY, 11.2, 1.9);
-  // South entrance is a real opening framed by stone piers.
-  wallZ(-21, 31, 20, wallY, 11.2, 1.9);
-  wallZ(21, 31, 20, wallY, 11.2, 1.9);
+  // The outer wall is fully closed; the entrance is sealed with a heavy gate.
+  wallZ(0, 31, 62, wallY, 11.2, 1.9);
+  box(8.8, 7.4, 0.32, 0, 3.8, 29.92, iron);
+  for (let i = 0; i < 13; i++) box(0.12, 7.2, 0.12, -4.1 + i * 0.68, 3.8, 29.72, trimStone);
+  box(9.2, 0.3, 0.35, 0, 7.6, 29.72, trimStone);
   box(63, 0.8, 2.2, 0, 11.2, -31, shadowStone);
   box(2.2, 0.8, 63, -31, 11.2, 0, shadowStone);
   box(2.2, 0.8, 63, 31, 11.2, 0, shadowStone);
-  box(20.5, 0.8, 2.2, -21, 11.2, 31, shadowStone);
-  box(20.5, 0.8, 2.2, 21, 11.2, 31, shadowStone);
+  // Continuous roof closes the keep against the sky and the outside world.
+  box(62.5, 1.1, 62.5, 0, 18.05, 0, shadowStone);
+  box(64, 0.45, 64, 0, 18.75, 0, cutStone);
 
   // Four thick watchtowers, ringed battlements and narrow arrow slits.
   for (const [tx, tz] of [[-31, -31], [31, -31], [-31, 31], [31, 31]]) {
@@ -168,9 +171,9 @@ function createCastle() {
   box(12, 1.25, 2.5, 0, 11.1, 31, trimStone);
   box(1.4, 11.8, 2.1, -5.2, 5.9, 31, shadowStone);
   box(1.4, 11.8, 2.1, 5.2, 5.9, 31, shadowStone);
-  // Recessed entrance stones and a portcullis motif above the passage.
-  for (let i = 0; i < 9; i++) box(0.22, 3.6, 0.18, -3.8 + i * 0.95, 8.7, 30.0, iron);
-  box(9.2, 0.28, 0.25, 0, 10.5, 30, iron);
+  // Decorative ironwork on the sealed main gate.
+  for (let i = 0; i < 9; i++) box(0.16, 5.8, 0.18, -3.6 + i * 0.9, 3.7, 29.68, iron);
+  box(9.0, 0.25, 0.22, 0, 6.8, 29.68, iron);
 
   // Ground-floor rooms and corridors; each wall includes a walk-through gap.
   wallX(-10, 0, 43, 3.2);
@@ -212,18 +215,30 @@ function createCastle() {
     wallZ(0, 22, 18, levelY, 6.1, 0.7);
   }
 
-  // Two broad ramps are walkable and are included in the same floor raycast.
-  const ramp = (x, z, bottomY, rise, length, width, rotationY = 0) => {
-    const mesh = box(width, 0.55, length, x, bottomY + rise / 2, z, floorStone, { floor: true });
-    mesh.rotation.x = -Math.atan2(rise, length);
-    mesh.rotation.y = rotationY;
-    return mesh;
+  // Staircases connect the ground hall to the galleries and the galleries to the towers.
+  // Each flight has visible stone treads plus a matching low-profile collision ramp,
+  // so movement remains continuous rather than snagging on individual risers.
+  const stairFlight = (x, zStart, zEnd, yStart, yEnd, width, steps) => {
+    const length = Math.abs(zEnd - zStart);
+    const centerZ = (zStart + zEnd) / 2;
+    const rise = yEnd - yStart;
+    const rampMesh = box(width - 0.18, 0.18, length + 0.25, x, (yStart + yEnd) / 2 - 0.02, centerZ, floorStone, { floor: true });
+    rampMesh.rotation.x = (zEnd < zStart ? -1 : 1) * Math.atan2(rise, length);
+    // The ramp's top surface is the continuous walkable collision surface.
+    const treadDepth = length / steps;
+    for (let i = 0; i < steps; i++) {
+      const progress = (i + 1) / steps;
+      const treadY = yStart + rise * progress;
+      const treadZ = zStart + (zEnd - zStart) * progress;
+      box(width, 0.22, treadDepth + 0.08, x, treadY - 0.11, treadZ, cutStone, { floor: true });
+      box(width + 0.12, 0.14, 0.16, x, treadY - 0.07, treadZ - Math.sign(zEnd - zStart) * treadDepth * 0.43, shadowStone);
+    }
+    box(width + 0.35, 0.28, 0.35, x, yStart - 0.14, zStart, trimStone);
+    box(width + 0.35, 0.28, 0.35, x, yEnd - 0.14, zEnd, trimStone);
   };
-  ramp(-5, -21, 0.2, 6.2, 18, 5);
-  ramp(5, 21, secondY + 0.2, 6.2, 18, 5, Math.PI);
-  for (let i = 0; i < 12; i++) {
-    box(4.7, 0.18, 1.1, -5, (i + 1) * 0.5, -29 + i * 1.35, shadowStone);
-  }
+  stairFlight(0, 9, -9, 0.08, secondY + 0.08, 5.2, 16);
+  stairFlight(-20, -10, -19, secondY + 0.08, thirdY + 0.08, 4.8, 16);
+  stairFlight(20, 10, 19, secondY + 0.08, thirdY + 0.08, 4.8, 16);
 
   // Stone windows, sconces and warm firelight are attached to the castle.
   for (const z of [-24, -15, -6, 6, 15, 24]) {

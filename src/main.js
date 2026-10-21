@@ -350,13 +350,11 @@ function createCastle() {
   scene.add(castle);
 }
 
-function castleFloorHeightAt(x, z, playerY = Infinity) {
+function castleFloorSurfacesAt(x, z) {
   const ax = Math.abs(x), az = Math.abs(z);
-  if (ax >= 30.2 || az >= 30.2) return terrainHeight(x, z);
+  if (ax >= 30.2 || az >= 30.2) return [terrainHeight(x, z) + 0.06];
 
-  // The keep has a continuous ground slab. Higher surfaces are only considered
-  // where matching platform meshes actually exist, preventing invisible floors
-  // across gaps between rooms and galleries.
+  // Ground slab is continuous throughout the keep.
   const floors = [castleFloorY];
   const onSecondFloor =
     (ax >= 14.5 && ax <= 29.5 && az <= 14.5) ||
@@ -365,22 +363,23 @@ function castleFloorHeightAt(x, z, playerY = Infinity) {
   if (onSecondFloor) floors.push(castleFloorY + 6.4);
   if (onThirdFloor) floors.push(castleFloorY + 12.8);
 
-  // Ramp surfaces follow the actual ramp direction and connect the ground to
-  // the second gallery. Only use a ramp height while inside its narrow footprint.
+  // Top surfaces of the two ramp meshes.
   if (x > -7.5 && x < -2.5 && z >= -30 && z <= -12) {
     floors.push(castleFloorY + 0.2 + ((z + 30) / 18) * 6.2);
   }
   if (x > 2.5 && x < 7.5 && z >= 12 && z <= 30) {
     floors.push(castleFloorY + 6.6 + ((30 - z) / 18) * 6.2);
   }
+  return floors;
+}
 
-  // Pick the highest physical surface at or below the player's feet. This
-  // avoids snapping a player standing below an upper gallery onto that floor.
-  let floor = castleFloorY;
+function castleFloorHeightAt(x, z, playerY = Infinity) {
+  const floors = castleFloorSurfacesAt(x, z);
+  let floor = -Infinity;
   for (const height of floors) {
     if (height <= playerY + 0.12 && height > floor) floor = height;
   }
-  return floor;
+  return Number.isFinite(floor) ? floor : Math.min(...floors);
 }
 
 function isCastleWallAt(x, z) {
@@ -680,13 +679,26 @@ function updatePlayer(delta) {
 
   const previousY = player.group.position.y;
   verticalVelocity -= 19 * delta;
-  player.group.position.y += verticalVelocity * delta;
-  const floor = castleFloorHeightAt(player.group.position.x, player.group.position.z, previousY);
-  if (verticalVelocity <= 0 && previousY >= floor - 0.12 && player.group.position.y <= floor) {
-    player.group.position.y = floor;
+  const nextY = previousY + verticalVelocity * delta;
+  const surfaces = castleFloorSurfacesAt(player.group.position.x, player.group.position.z);
+  let landingSurface = -Infinity;
+
+  // Swept vertical collision: detect every floor crossed during this frame,
+  // not only the floor selected after the player has already passed through it.
+  if (verticalVelocity <= 0) {
+    for (const surface of surfaces) {
+      if (previousY >= surface - 0.08 && nextY <= surface && surface > landingSurface) {
+        landingSurface = surface;
+      }
+    }
+  }
+
+  if (Number.isFinite(landingSurface)) {
+    player.group.position.y = landingSurface;
     verticalVelocity = 0;
     grounded = true;
-  } else if (player.group.position.y > floor + 0.12) {
+  } else {
+    player.group.position.y = nextY;
     grounded = false;
   }
 

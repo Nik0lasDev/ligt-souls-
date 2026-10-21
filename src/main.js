@@ -202,9 +202,6 @@ function createCastle() {
   // Upper galleries are actual walkable slabs, not guessed collision heights.
   const secondY = 6.4;
   floor(53, 15, 0, secondY, -22);
-  // Landing platform extends beyond the top of the main staircase and overlaps
-  // the gallery slab, preventing a visible/fall-through seam at the stair exit.
-  floor(10, 5, 0, secondY, -16.5);
   floor(15, 29, -22, secondY, 0);
   floor(15, 29, 22, secondY, 0);
   floor(53, 15, 0, secondY, 22);
@@ -221,6 +218,11 @@ function createCastle() {
     wallZ(0, -22, 18, levelY, 6.1, 0.7);
     wallZ(0, 22, 18, levelY, 6.1, 0.7);
   }
+
+  // Close the exposed gaps beside the main staircase's upper landing.
+  // These are wall segments, not extra floor slabs.
+  wallX(-3.25, -18.25, 7.5, secondY + 3.15, 6.1, 0.7);
+  wallX(3.25, -18.25, 7.5, secondY + 3.15, 6.1, 0.7);
 
   // Staircases connect the ground hall to the galleries and the galleries to the towers.
   // Each flight has visible stone treads plus a matching low-profile collision ramp,

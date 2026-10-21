@@ -65,6 +65,14 @@ kbd { min-width: 20px; height: 20px; padding: 0 5px; display: inline-grid; place
 .mobile-actions button:last-child { width: 64px; height: 64px; background: rgba(212,244,119,.9); color: #1c2b1e; }
 .mobile-controls p { position: absolute; bottom: -29px; width: 100%; text-align: center; color: rgba(255,255,255,.62); font: 8px 'DM Mono', monospace; letter-spacing: .1em; }
 .mobile-controls.visible { display: block; }
+.pause-menu { position: fixed; z-index: 8; inset: 0; display: grid; place-items: center; padding: 24px; background: rgba(7, 15, 14, .68); backdrop-filter: blur(9px); opacity: 0; visibility: hidden; pointer-events: none; transition: opacity .2s ease, visibility .2s ease; }
+.pause-menu.visible { opacity: 1; visibility: visible; pointer-events: auto; }
+.pause-panel { width: min(500px, 100%); padding: clamp(28px, 5vw, 52px); border: 1px solid rgba(255,255,255,.2); background: rgba(16,26,25,.88); box-shadow: 0 24px 80px rgba(0,0,0,.28); }
+.pause-panel h2 { margin: 24px 0 16px; font-size: clamp(38px, 6vw, 62px); line-height: 1.03; letter-spacing: -.065em; font-weight: 600; }
+.pause-panel h2 em { color: var(--accent); font-style: normal; }
+.pause-panel p { color: var(--muted); font-size: 14px; line-height: 1.7; }
+.pause-panel .primary-button { margin-top: 26px; }
+.pause-note { display: flex; align-items: center; gap: 10px; margin-top: 28px; color: rgba(255,255,255,.56); font: 9px 'DM Mono', monospace; letter-spacing: .12em; }
 #error-message { display: none; position: fixed; z-index: 9; left: 20px; right: 20px; bottom: 20px; padding: 14px; border: 1px solid #e5a2a2; background: #3c1717; color: white; font-size: 13px; }
 @media (max-width: 700px) {
   .topbar { padding: 18px 18px; }

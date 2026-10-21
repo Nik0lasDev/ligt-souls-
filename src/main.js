@@ -15,6 +15,7 @@ const errorMessage = document.querySelector('#error-message');
 
 let scene, camera, renderer, clock, player, characterRoot, characterParts;
 let started = false;
+let worldReady = false;
 let cameraYaw = 0;
 let cameraPitch = 0.24;
 let cameraDistance = 7.5;
@@ -44,6 +45,23 @@ function showError(message) {
   errorMessage.style.display = 'block';
 }
 
+// Register the start action before building the world. If initialization fails,
+// the button still responds and explains what happened instead of appearing dead.
+startButton.addEventListener('click', () => {
+  if (!worldReady) {
+    showError('O mundo ainda não terminou de carregar. Se esta mensagem persistir, recarregue a página.');
+    return;
+  }
+  started = true;
+  intro.classList.add('hidden');
+  hud.classList.add('visible');
+  crosshair.classList.add('visible');
+  controlsHint.classList.add('visible');
+  if (isTouchDevice) mobileControls.classList.add('visible');
+  statusLabel.textContent = 'Exploração ativa';
+  errorMessage.style.display = 'none';
+});
+
 function init() {
   scene = new THREE.Scene();
   scene.background = new THREE.Color('#a9c9d0');
@@ -69,6 +87,7 @@ function init() {
   updateChunks(true);
   bindControls();
   statusLabel.textContent = 'Mundo pronto';
+  worldReady = true;
   animate();
 }
 
@@ -357,16 +376,6 @@ function bindControls() {
   renderer.domElement.addEventListener('pointerup', () => { draggingCamera = false; });
   renderer.domElement.addEventListener('pointercancel', () => { draggingCamera = false; });
 
-  startButton.addEventListener('click', () => {
-    started = true;
-    intro.classList.add('hidden');
-    hud.classList.add('visible');
-    crosshair.classList.add('visible');
-    controlsHint.classList.add('visible');
-    if (isTouchDevice) mobileControls.classList.add('visible');
-    statusLabel.textContent = 'Exploração ativa';
-  });
-
   const joystick = document.querySelector('#joystick');
   const knob = document.querySelector('#joystick-knob');
   joystick.addEventListener('pointerdown', (event) => {
@@ -494,6 +503,6 @@ function animate() {
 try {
   init();
 } catch (error) {
-  console.error(error);
-  showError('Não foi possível iniciar o mundo 3D. Atualize o navegador e tente novamente.');
+  console.error('Falha ao inicializar o LSLIGHT SOULS:', error);
+  showError('Falha ao iniciar o mundo 3D: ' + (error?.message || 'erro desconhecido') + '. Recarregue a página; se persistir, envie esta mensagem de erro.');
 }

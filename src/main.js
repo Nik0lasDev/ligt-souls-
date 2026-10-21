@@ -202,6 +202,9 @@ function createCastle() {
   // Upper galleries are actual walkable slabs, not guessed collision heights.
   const secondY = 6.4;
   floor(53, 15, 0, secondY, -22);
+  // Landing platform extends beyond the top of the main staircase and overlaps
+  // the gallery slab, preventing a visible/fall-through seam at the stair exit.
+  floor(10, 5, 0, secondY, -16.5);
   floor(15, 29, -22, secondY, 0);
   floor(15, 29, 22, secondY, 0);
   floor(53, 15, 0, secondY, 22);

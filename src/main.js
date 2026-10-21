@@ -239,10 +239,19 @@ function createCastle() {
     }
     box(width + 0.35, 0.28, 0.35, x, yStart - 0.14, zStart, trimStone);
     box(width + 0.35, 0.28, 0.35, x, yEnd - 0.14, zEnd, trimStone);
+
+    // Solid stone parapets along both sides. Their colliders span the stair's
+    // full elevation so the player cannot clip through at the upper landing.
+    const sideX = [x - width / 2 - 0.12, x + width / 2 + 0.12];
+    for (const railX of sideX) {
+      const rail = box(0.34, rise + 1.5, length + 0.2, railX, (yStart + yEnd) / 2, centerZ, shadowStone, { wall: true });
+      rail.position.y = (yStart + yEnd) / 2;
+    }
   };
   stairFlight(0, 9, -14.5, 0.08, secondY + 0.08, 5.2, 20);
-  stairFlight(-20, -10, -19, secondY + 0.08, thirdY + 0.08, 4.8, 16);
-  stairFlight(20, 10, 19, secondY + 0.08, thirdY + 0.08, 4.8, 16);
+  // Both upper flights begin on the second-floor gallery and end on third-floor landings.
+  stairFlight(-20, -14.5, -24.5, secondY + 0.08, thirdY + 0.08, 4.8, 16);
+  stairFlight(20, 14.5, 24.5, secondY + 0.08, thirdY + 0.08, 4.8, 16);
 
   // Stone windows, sconces and warm firelight are attached to the castle.
   for (const z of [-24, -15, -6, 6, 15, 24]) {
@@ -421,7 +430,7 @@ function updateJoystick(event, joystick, knob) {
 function collidesWall(x, z, feetY) {
   const headY = feetY + PLAYER_HEIGHT;
   for (const wall of wallColliders) {
-    if (headY <= wall.bottom + 0.04 || feetY >= wall.top - 0.04) continue;
+    if (headY < wall.bottom - 0.04 || feetY > wall.top + 0.04) continue;
     if (wall.shape === 'circle') {
       const dx = x - wall.x;
       const dz = z - wall.z;
@@ -438,12 +447,15 @@ function collidesWall(x, z, feetY) {
 }
 
 function floorAt(x, z, previousY, nextY) {
-  raycaster.set(new THREE.Vector3(x, previousY + 0.18, z), down);
-  raycaster.far = Math.max(2, previousY - nextY + 0.5);
+  // Cast from above the feet: the stair surface can be higher than the previous
+  // frame while sprinting uphill, so starting just 18 cm above the player misses it.
+  const stepUp = 0.58;
+  raycaster.set(new THREE.Vector3(x, previousY + stepUp, z), down);
+  raycaster.far = stepUp + Math.max(0.45, previousY - nextY + 0.55);
   const hits = raycaster.intersectObjects(floorMeshes, false);
   for (const hit of hits) {
     const y = hit.point.y;
-    if (y <= previousY + 0.12 && y >= nextY - 0.12) return y;
+    if (y <= previousY + stepUp && y >= nextY - 0.12) return y;
   }
   return null;
 }

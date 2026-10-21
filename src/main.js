@@ -178,7 +178,9 @@ function createCastle() {
   // Ground-floor rooms and corridors; each wall includes a walk-through gap.
   wallX(-10, 0, 43, 3.2);
   wallX(10, 0, 43, 3.2);
-  wallZ(0, -10, 20, 3.2);
+  // Leave a broad central opening for the main staircase.
+  wallZ(-7, -10, 6, 3.2);
+  wallZ(7, -10, 6, 3.2);
   wallZ(-20, 10, 22, 3.2);
   wallZ(20, 10, 22, 3.2);
   wallZ(-10, -20, 15, 3.2);
@@ -223,7 +225,7 @@ function createCastle() {
     const centerZ = (zStart + zEnd) / 2;
     const rise = yEnd - yStart;
     const rampMesh = box(width - 0.18, 0.18, length + 0.25, x, (yStart + yEnd) / 2 - 0.02, centerZ, floorStone, { floor: true });
-    rampMesh.rotation.x = (zEnd < zStart ? -1 : 1) * Math.atan2(rise, length);
+    rampMesh.rotation.x = (zEnd < zStart ? 1 : -1) * Math.atan2(rise, length);
     // The ramp's top surface is the continuous walkable collision surface.
     const treadDepth = length / steps;
     for (let i = 0; i < steps; i++) {
@@ -236,7 +238,7 @@ function createCastle() {
     box(width + 0.35, 0.28, 0.35, x, yStart - 0.14, zStart, trimStone);
     box(width + 0.35, 0.28, 0.35, x, yEnd - 0.14, zEnd, trimStone);
   };
-  stairFlight(0, 9, -9, 0.08, secondY + 0.08, 5.2, 16);
+  stairFlight(0, 9, -14.5, 0.08, secondY + 0.08, 5.2, 20);
   stairFlight(-20, -10, -19, secondY + 0.08, thirdY + 0.08, 4.8, 16);
   stairFlight(20, 10, 19, secondY + 0.08, thirdY + 0.08, 4.8, 16);
 

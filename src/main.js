@@ -150,6 +150,8 @@ function createCastle() {
     tower.castShadow = !isTouchDevice;
     tower.receiveShadow = !isTouchDevice;
     castle.add(tower);
+    // The tower mesh is cylindrical, so use a circular collider rather than a box.
+    wallColliders.push({ shape: 'circle', x: tx, z: tz, radius: 4.15, bottom: 0, top: 15.2 });
     const crown = new THREE.Mesh(new THREE.CylinderGeometry(4.25, 4.05, 0.7, 14), shadowStone);
     crown.position.set(tx, 15.25, tz);
     castle.add(crown);
@@ -420,6 +422,13 @@ function collidesWall(x, z, feetY) {
   const headY = feetY + PLAYER_HEIGHT;
   for (const wall of wallColliders) {
     if (headY <= wall.bottom + 0.04 || feetY >= wall.top - 0.04) continue;
+    if (wall.shape === 'circle') {
+      const dx = x - wall.x;
+      const dz = z - wall.z;
+      const minDistance = wall.radius + PLAYER_RADIUS;
+      if (dx * dx + dz * dz < minDistance * minDistance) return true;
+      continue;
+    }
     const closestX = THREE.MathUtils.clamp(x, wall.x - wall.w / 2, wall.x + wall.w / 2);
     const closestZ = THREE.MathUtils.clamp(z, wall.z - wall.d / 2, wall.z + wall.d / 2);
     const dx = x - closestX, dz = z - closestZ;
@@ -454,9 +463,18 @@ function updatePlayer(delta) {
   if (targetSpeed > 0) {
     const dx = movement.x * player.speed * delta;
     const dz = movement.z * player.speed * delta;
-    const px = player.group.position.x, pz = player.group.position.z, py = player.group.position.y;
-    if (!collidesWall(px + dx, pz, py)) player.group.position.x += dx;
-    if (!collidesWall(player.group.position.x, pz + dz, py)) player.group.position.z += dz;
+    const py = player.group.position.y;
+    // Sweep movement in short increments to prevent sprinting through thin walls.
+    const distance = Math.hypot(dx, dz);
+    const substeps = Math.max(1, Math.ceil(distance / (PLAYER_RADIUS * 0.45)));
+    const stepX = dx / substeps;
+    const stepZ = dz / substeps;
+    for (let i = 0; i < substeps; i++) {
+      const nextX = player.group.position.x + stepX;
+      const nextZ = player.group.position.z + stepZ;
+      if (!collidesWall(nextX, player.group.position.z, py)) player.group.position.x = nextX;
+      if (!collidesWall(player.group.position.x, nextZ, py)) player.group.position.z = nextZ;
+    }
   }
 
   const previousY = player.group.position.y;

@@ -352,18 +352,18 @@ function createCastle() {
 
 function castleFloorHeightAt(x, z) {
   const ax = Math.abs(x), az = Math.abs(z);
-  if (ax < 31 && az < 31) {
-    // A pair of broad ramps connect the ground floor, second floor and upper galleries.
+  if (ax < 30.2 && az < 30.2) {
+    // Ground level is flat; ramps and upper walkways provide routes to higher floors.
     if (x > -8 && x < -2 && z < -12 && z > -30) {
       return castleFloorY + 0.2 + ((-12 - z) / 18) * 6.2;
     }
     if (x > 2 && x < 8 && z > 12 && z < 30) {
       return castleFloorY + 6.6 + ((z - 12) / 18) * 6.2;
     }
-    if (z < -14 && z > -30 && x > -30 && x < -14) return castleFloorY + 6.4;
-    if (z < -14 && z > -30 && x > 14 && x < 30) return castleFloorY + 6.4;
-    if (z > 14 && z < 30 && x > -30 && x < -14) return castleFloorY + 6.4;
-    if (z > 14 && z < 30 && x > 14 && x < 30) return castleFloorY + 6.4;
+    if (ax > 14 && az > 14 && ax < 29 && az < 29) return castleFloorY + 12.8;
+    if (ax > 14 && az < 14) return castleFloorY + 6.4;
+    if (az > 14 && ax < 14) return castleFloorY + 6.4;
+    return castleFloorY;
   }
   return terrainHeight(x, z);
 }

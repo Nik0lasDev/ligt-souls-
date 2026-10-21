@@ -12,9 +12,12 @@ const crosshair = document.querySelector('#crosshair');
 const controlsHint = document.querySelector('#controls-hint');
 const mobileControls = document.querySelector('#mobile-controls');
 const errorMessage = document.querySelector('#error-message');
+const pauseMenu = document.querySelector('#pause-menu');
+const resumeButton = document.querySelector('#resume-button');
 
 let scene, camera, renderer, clock, player, characterRoot, characterParts;
 let started = false;
+let paused = false;
 let worldReady = false;
 let cameraYaw = 0;
 let cameraPitch = 0.24;
@@ -53,6 +56,7 @@ startButton.addEventListener('click', () => {
     return;
   }
   started = true;
+  paused = false;
   intro.classList.add('hidden');
   hud.classList.add('visible');
   crosshair.classList.add('visible');
@@ -60,6 +64,7 @@ startButton.addEventListener('click', () => {
   if (isTouchDevice) mobileControls.classList.add('visible');
   statusLabel.textContent = 'Exploração ativa';
   errorMessage.style.display = 'none';
+  if (!isTouchDevice) renderer.domElement.requestPointerLock?.();
 });
 
 function init() {
@@ -346,8 +351,41 @@ function updateChunks(force = false) {
   if (force) statusLabel.textContent = 'Mundo pronto';
 }
 
+function setPaused(value) {
+  if (!started) return;
+  paused = value;
+  pauseMenu.classList.toggle('visible', paused);
+  pauseMenu.setAttribute('aria-hidden', String(!paused));
+  statusLabel.textContent = paused ? 'Jogo pausado' : 'Exploração ativa';
+  if (paused) {
+    if (document.pointerLockElement) document.exitPointerLock();
+    keys.clear();
+    player.speed = 0;
+    joystickInput = { x: 0, y: 0 };
+    runTouch = false;
+  } else if (!isTouchDevice) {
+    renderer.domElement.requestPointerLock?.();
+  }
+}
+
 function bindControls() {
   addEventListener('resize', onResize);
+  resumeButton.addEventListener('click', () => setPaused(false));
+  document.addEventListener('pointerlockchange', () => {
+    if (started && !isTouchDevice && document.pointerLockElement !== renderer.domElement && !paused) {
+      setPaused(true);
+    }
+  });
+  document.addEventListener('pointerlockerror', () => {
+    statusLabel.textContent = 'Clique no jogo para capturar o mouse';
+  });
+  addEventListener('keydown', (event) => {
+    if (event.code === 'Escape' && started) {
+      event.preventDefault();
+      if (!paused) setPaused(true);
+      return;
+    }
+  });
   addEventListener('keydown', (event) => {
     if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.code)) event.preventDefault();
     keys.add(event.code);
@@ -359,16 +397,22 @@ function bindControls() {
   addEventListener('keyup', (event) => keys.delete(event.code));
   addEventListener('blur', () => keys.clear());
 
+  renderer.domElement.addEventListener('click', () => {
+    if (started && paused) return;
+    if (started && !isTouchDevice && document.pointerLockElement !== renderer.domElement) {
+      renderer.domElement.requestPointerLock?.();
+    }
+  });
   renderer.domElement.addEventListener('pointerdown', (event) => {
-    if (!started) return;
+    if (!started || paused || isTouchDevice) return;
     draggingCamera = true;
     lastPointer = { x: event.clientX, y: event.clientY };
     renderer.domElement.setPointerCapture?.(event.pointerId);
   });
   renderer.domElement.addEventListener('pointermove', (event) => {
-    if (!draggingCamera || !started) return;
-    const dx = event.clientX - lastPointer.x;
-    const dy = event.clientY - lastPointer.y;
+    if (!draggingCamera || !started || paused || (!isTouchDevice && document.pointerLockElement !== renderer.domElement)) return;
+    const dx = isTouchDevice ? event.clientX - lastPointer.x : event.movementX;
+    const dy = isTouchDevice ? event.clientY - lastPointer.y : event.movementY;
     cameraYaw -= dx * 0.004;
     cameraPitch = THREE.MathUtils.clamp(cameraPitch + dy * 0.003, -0.12, 0.78);
     lastPointer = { x: event.clientX, y: event.clientY };
@@ -431,7 +475,7 @@ function updateJoystick(event, joystick, knob) {
 }
 
 function updatePlayer(delta) {
-  if (!started) return;
+  if (!started || paused) return;
   const forward = (keys.has('KeyW') || keys.has('ArrowUp') ? 1 : 0) - (keys.has('KeyS') || keys.has('ArrowDown') ? 1 : 0) - joystickInput.y;
   const strafe = (keys.has('KeyD') || keys.has('ArrowRight') ? 1 : 0) - (keys.has('KeyA') || keys.has('ArrowLeft') ? 1 : 0) + joystickInput.x;
   forwardVector.set(-Math.sin(cameraYaw), 0, -Math.cos(cameraYaw));

@@ -472,6 +472,31 @@ function updatePlayer(delta) {
 }
 
 function updateCamera(delta) {
+  // First-person view: place the camera at the player's eye height and aim
+  // from the current yaw/pitch. Keep the third-person view only on the intro.
+  if (started) {
+    const eye = player.group.position.clone().add(new THREE.Vector3(0, 1.62, 0));
+    camera.position.copy(eye);
+    const lookDirection = new THREE.Vector3(
+      -Math.sin(cameraYaw) * Math.cos(cameraPitch),
+      Math.sin(cameraPitch),
+      -Math.cos(cameraYaw) * Math.cos(cameraPitch)
+    );
+    camera.lookAt(eye.clone().add(lookDirection));
+    // Prevent the third-person avatar from appearing in front of the camera.
+    characterParts.visible = false;
+    if (camera.fov !== 78) {
+      camera.fov = 78;
+      camera.updateProjectionMatrix();
+    }
+    return;
+  }
+
+  characterParts.visible = true;
+  if (camera.fov !== 65) {
+    camera.fov = 65;
+    camera.updateProjectionMatrix();
+  }
   const target = player.group.position.clone().add(new THREE.Vector3(0, 1.55, 0));
   const horizontal = Math.cos(cameraPitch) * cameraDistance;
   const offset = new THREE.Vector3(

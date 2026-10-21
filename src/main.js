@@ -26,14 +26,12 @@ const keys = new Set();
 const chunks = new Map();
 const CHUNK_SIZE = 48;
 const CHUNK_RESOLUTION = 24;
-const RENDER_DISTANCE = 3;
+const RENDER_DISTANCE = isTouchDevice ? 1 : 2;
 const WORLD_SEED = 192837;
 const tempVector = new THREE.Vector3();
 const forwardVector = new THREE.Vector3();
 const rightVector = new THREE.Vector3();
 const moveVector = new THREE.Vector3();
-const raycaster = new THREE.Raycaster();
-const pointer = new THREE.Vector2();
 const isTouchDevice = matchMedia('(pointer: coarse)').matches;
 let draggingCamera = false;
 let lastPointer = { x: 0, y: 0 };
@@ -262,7 +260,7 @@ function addVegetation(group, cx, cz) {
   ];
   const grassMaterial = new THREE.MeshStandardMaterial({ color: '#879b62', roughness: 1, side: THREE.DoubleSide });
   const random = (index) => hash2(cx * 101 + index * 17, cz * 89 - index * 31);
-  const treeCount = 5 + Math.floor(random(3) * 8);
+  const treeCount = 3 + Math.floor(random(3) * 5);
   for (let i = 0; i < treeCount; i++) {
     const rx = (random(i + 1) * 0.88 + 0.06) * CHUNK_SIZE;
     const rz = (random(i + 21) * 0.88 + 0.06) * CHUNK_SIZE;
@@ -289,7 +287,7 @@ function addVegetation(group, cx, cz) {
     group.add(tree);
   }
 
-  for (let i = 0; i < 32; i++) {
+  for (let i = 0; i < 12; i++) {
     const rx = random(i + 150) * CHUNK_SIZE;
     const rz = random(i + 190) * CHUNK_SIZE;
     const worldX = cx * CHUNK_SIZE - CHUNK_SIZE / 2 + rx;
@@ -473,11 +471,7 @@ function updateCamera(delta) {
     Math.cos(cameraYaw) * horizontal
   );
   const desired = target.clone().add(offset);
-  raycaster.set(target, desired.clone().sub(target).normalize());
-  const hits = raycaster.intersectObjects(Array.from(chunks.values()), true);
-  if (hits.length && hits[0].distance < target.distanceTo(desired)) {
-    desired.copy(hits[0].point).addScaledVector(target.clone().sub(desired).normalize(), 0.35);
-  }
+  desired.y = Math.max(desired.y, terrainHeight(desired.x, desired.z) + 1.1);
   camera.position.lerp(desired, 1 - Math.exp(-delta * 7));
   camera.lookAt(target);
 }

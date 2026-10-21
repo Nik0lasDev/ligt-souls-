@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#101a19" />
+    <meta name="description" content="Um protótipo 3D de exploração com mundo procedural e aparentemente infinito." />
+    <title>Light Souls — Infinite World</title>
+  </head>
+  <body>
+    <div id="app">
+      <div id="game"></div>
+      <header class="topbar">
+        <a class="brand" href="#" aria-label="Light Souls início">
+          <span class="brand-mark">LS</span>
+          <span><strong>LIGHT SOULS</strong><small>INFINITE WORLD</small></span>
+        </a>
+        <div class="status"><span class="status-dot"></span><span id="world-status">Gerando mundo</span></div>
+      </header>
+
+      <section class="intro" id="intro">
+        <div class="eyebrow"><span></span> PROTÓTIPO 3D · VERSÃO 0.1</div>
+        <h1>Um mundo.<br /><em>Sem fim.</em></h1>
+        <p>Explore paisagens geradas em tempo real. Cada passo revela um novo pedaço do horizonte.</p>
+        <button id="start-button" class="primary-button">Entrar no mundo <span>↗</span></button>
+        <div class="intro-note">MUNDO PROCEDURAL <i></i> EXPLORAÇÃO LIVRE</div>
+      </section>
+
+      <aside class="hud" id="hud">
+        <div class="hud-location"><span class="hud-label">LOCALIZAÇÃO</span><strong id="coordinates">X 0 · Z 0</strong></div>
+        <div class="hud-speed"><span class="speed-dot"></span><span id="movement-label">PARADO</span></div>
+      </aside>
+
+      <div class="crosshair" id="crosshair"><span></span><span></span></div>
+
+      <div class="controls-hint" id="controls-hint">
+        <div><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd><span> MOVER</span></div>
+        <div><kbd>SHIFT</kbd><span> CORRER</span></div>
+        <div><kbd>ESPAÇO</kbd><span> PULAR</span></div>
+        <div><kbd>MOUSE</kbd><span> CÂMERA</span></div>
+      </div>
+
+      <div class="mobile-controls" id="mobile-controls">
+        <div class="joystick" id="joystick"><div class="joystick-knob" id="joystick-knob"></div></div>
+        <div class="mobile-actions"><button id="run-touch" aria-label="Correr">↗</button><button id="jump-touch" aria-label="Pular">↑</button></div>
+        <p>ARRASTE PARA MOVER · TOQUE DIREITO PARA GIRAR A CÂMERA</p>
+      </div>
+
+      <div class="bottom-bar"><span>LIGHT SOULS <b>·</b> BUILD 0.1.0</span><span>EXPLORE NO SEU RITMO</span></div>
+      <div id="error-message" role="alert"></div>
+    </div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

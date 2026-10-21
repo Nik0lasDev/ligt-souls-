@@ -350,34 +350,66 @@ function createCastle() {
   scene.add(castle);
 }
 
-function castleFloorHeightAt(x, z) {
+function castleFloorHeightAt(x, z, playerY = Infinity) {
   const ax = Math.abs(x), az = Math.abs(z);
-  if (ax < 30.2 && az < 30.2) {
-    // Ground level is flat; ramps and upper walkways provide routes to higher floors.
-    if (x > -8 && x < -2 && z < -12 && z > -30) {
-      return castleFloorY + 0.2 + ((-12 - z) / 18) * 6.2;
-    }
-    if (x > 2 && x < 8 && z > 12 && z < 30) {
-      return castleFloorY + 6.6 + ((z - 12) / 18) * 6.2;
-    }
-    if (ax > 14 && az > 14 && ax < 29 && az < 29) return castleFloorY + 12.8;
-    if (ax > 14 && az < 14) return castleFloorY + 6.4;
-    if (az > 14 && ax < 14) return castleFloorY + 6.4;
-    return castleFloorY;
+  if (ax >= 30.2 || az >= 30.2) return terrainHeight(x, z);
+
+  // The keep has a continuous ground slab. Higher surfaces are only considered
+  // where matching platform meshes actually exist, preventing invisible floors
+  // across gaps between rooms and galleries.
+  const floors = [castleFloorY];
+  const onSecondFloor =
+    (ax >= 14.5 && ax <= 29.5 && az <= 14.5) ||
+    (az >= 14.5 && az <= 29.5 && ax <= 26.5);
+  const onThirdFloor = ax >= 10.5 && ax <= 29.5 && az >= 10.5 && az <= 29.5;
+  if (onSecondFloor) floors.push(castleFloorY + 6.4);
+  if (onThirdFloor) floors.push(castleFloorY + 12.8);
+
+  // Ramp surfaces follow the actual ramp direction and connect the ground to
+  // the second gallery. Only use a ramp height while inside its narrow footprint.
+  if (x > -7.5 && x < -2.5 && z >= -30 && z <= -12) {
+    floors.push(castleFloorY + 0.2 + ((z + 30) / 18) * 6.2);
   }
-  return terrainHeight(x, z);
+  if (x > 2.5 && x < 7.5 && z >= 12 && z <= 30) {
+    floors.push(castleFloorY + 6.6 + ((30 - z) / 18) * 6.2);
+  }
+
+  // Pick the highest physical surface at or below the player's feet. This
+  // avoids snapping a player standing below an upper gallery onto that floor.
+  let floor = castleFloorY;
+  for (const height of floors) {
+    if (height <= playerY + 0.12 && height > floor) floor = height;
+  }
+  return floor;
 }
 
 function isCastleWallAt(x, z) {
   const ax = Math.abs(x), az = Math.abs(z);
-  const outer = (Math.abs(ax - 31) < 1.15 && az < 30.5)
-    || (Math.abs(z + 31) < 1.15 && ax < 30.5)
-    || (Math.abs(z - 31) < 1.15 && ax < 30.5 && ax > 6.1);
+  // Collision bands match the actual thickness and extents of the outer walls.
+  const outer = (Math.abs(ax - 31) < 1.05 && az < 30.1)
+    || (Math.abs(z + 31) < 1.05 && ax < 30.1)
+    || (Math.abs(z - 31) < 1.05 && ax < 30.1 && ax > 6.0);
   if (outer) return true;
-  // Ground-floor room partitions, with openings left for doorways.
-  if (Math.abs(ax - 10) < 0.65 && az < 29 && !(az > 2.2 && az < 6.2) && !(az > 16 && az < 20)) return true;
-  if (Math.abs(z + 10) < 0.65 && ax < 10 && !(ax > 2.2 && ax < 6.2)) return true;
-  if (Math.abs(z - 10) < 0.65 && ax > 10 && ax < 30 && !(ax > 15 && ax < 19)) return true;
+
+  // Ground-floor partitions: keep the doorway gaps aligned with their meshes.
+  if (Math.abs(ax - 10) < 0.62 && az < 21.7
+      && !(az > 2.5 && az < 5.9) && !(az > 16.3 && az < 19.7)) return true;
+  if (Math.abs(z + 10) < 0.62 && ax < 10.2
+      && !(ax > 2.5 && ax < 5.9) && !(ax > 14.5 && ax < 17.5)) return true;
+  if (Math.abs(z - 10) < 0.62 && ax > 9.2 && ax < 31.2
+      && !(ax > 14.5 && ax < 19.5)) return true;
+
+  // Upper galleries have their own partitions. Apply them only while the
+  // player is on an upper level, so they do not block the ground floor.
+  const level = player?.group?.position?.y ?? castleFloorY;
+  if (level > castleFloorY + 5.7) {
+    const onUpper = level < castleFloorY + 10;
+    const wallX = onUpper ? 22 : 20;
+    const wallZ = onUpper ? 22 : 20;
+    if (Math.abs(ax - wallX) < 0.52 && az < 14.2) return true;
+    if (Math.abs(z + wallZ) < 0.52 && ax < 9.2) return true;
+    if (Math.abs(z - wallZ) < 0.52 && ax < 9.2) return true;
+  }
   return false;
 }
 
@@ -646,13 +678,16 @@ function updatePlayer(delta) {
     characterRoot.rotation.y += difference * Math.min(1, delta * 10);
   }
 
+  const previousY = player.group.position.y;
   verticalVelocity -= 19 * delta;
   player.group.position.y += verticalVelocity * delta;
-  const floor = castleFloorHeightAt(player.group.position.x, player.group.position.z);
-  if (player.group.position.y <= floor) {
+  const floor = castleFloorHeightAt(player.group.position.x, player.group.position.z, previousY);
+  if (verticalVelocity <= 0 && previousY >= floor - 0.12 && player.group.position.y <= floor) {
     player.group.position.y = floor;
     verticalVelocity = 0;
     grounded = true;
+  } else if (player.group.position.y > floor + 0.12) {
+    grounded = false;
   }
 
   walkTime += delta * (running ? 13 : 8) * (player.speed > 0.1 ? 1 : 0.12);

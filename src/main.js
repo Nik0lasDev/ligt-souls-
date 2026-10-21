@@ -407,12 +407,15 @@ function bindControls() {
     if (!started || paused || isTouchDevice) return;
     draggingCamera = true;
     lastPointer = { x: event.clientX, y: event.clientY };
-    renderer.domElement.setPointerCapture?.(event.pointerId);
+    // Pointer lock provides continuous mouse deltas; pointer capture is only useful for touch dragging.
+    if (isTouchDevice) renderer.domElement.setPointerCapture?.(event.pointerId);
   });
   renderer.domElement.addEventListener('pointermove', (event) => {
-    if (!draggingCamera || !started || paused || (!isTouchDevice && document.pointerLockElement !== renderer.domElement)) return;
-    const dx = isTouchDevice ? event.clientX - lastPointer.x : event.movementX;
-    const dy = isTouchDevice ? event.clientY - lastPointer.y : event.movementY;
+    if (!started || paused) return;
+    const mouseLocked = !isTouchDevice && document.pointerLockElement === renderer.domElement;
+    if (!mouseLocked && !draggingCamera) return;
+    const dx = mouseLocked ? event.movementX : event.clientX - lastPointer.x;
+    const dy = mouseLocked ? event.movementY : event.clientY - lastPointer.y;
     cameraYaw -= dx * 0.004;
     cameraPitch = THREE.MathUtils.clamp(cameraPitch + dy * 0.003, -0.12, 0.78);
     lastPointer = { x: event.clientX, y: event.clientY };

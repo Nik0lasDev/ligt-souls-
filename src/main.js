@@ -219,10 +219,6 @@ function createCastle() {
     wallZ(0, 22, 18, levelY, 6.1, 0.7);
   }
 
-  // Close the exposed gaps beside the main staircase's upper landing.
-  // These are wall segments, not extra floor slabs.
-  wallX(-3.25, -18.25, 7.5, secondY + 3.15, 6.1, 0.7);
-  wallX(3.25, -18.25, 7.5, secondY + 3.15, 6.1, 0.7);
 
   // Staircases connect the ground hall to the galleries and the galleries to the towers.
   // Each flight has visible stone treads plus a matching low-profile collision ramp,

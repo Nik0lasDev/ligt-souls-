@@ -26,6 +26,7 @@ let verticalVelocity = 0;
 let grounded = true;
 let walkTime = 0;
 let terrainMaterial;
+let castleFloorY = 0;
 const keys = new Set();
 const chunks = new Map();
 const CHUNK_SIZE = 48;
@@ -90,6 +91,7 @@ function init() {
   addSkyDetails();
   createCharacter();
   updateChunks(true);
+  createCastle();
   bindControls();
   statusLabel.textContent = 'Mundo pronto';
   worldReady = true;
@@ -235,6 +237,98 @@ function terrainHeight(x, z) {
   const hills = (smoothNoise(x * 0.038 + 21, z * 0.038 - 8) - 0.5) * 2.4;
   const detail = (smoothNoise(x * 0.12 - 5, z * 0.12 + 18) - 0.5) * 0.45;
   return broad + hills + detail;
+}
+
+function createCastle() {
+  // A simple, empty stone keep: enclosed hall, four towers and an open gate.
+  castleFloorY = terrainHeight(0, 0);
+  const stone = new THREE.MeshStandardMaterial({ color: '#777b80', roughness: 0.96 });
+  const stoneDark = new THREE.MeshStandardMaterial({ color: '#555b62', roughness: 1 });
+  const floorMaterial = new THREE.MeshStandardMaterial({ color: '#696d70', roughness: 1 });
+  const mortarMaterial = new THREE.MeshStandardMaterial({ color: '#44494e', roughness: 1 });
+  const castle = new THREE.Group();
+  const addBox = (w, h, d, x, y, z, material) => {
+    const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), material);
+    mesh.position.set(x, y, z);
+    mesh.castShadow = !isTouchDevice;
+    mesh.receiveShadow = !isTouchDevice;
+    castle.add(mesh);
+    return mesh;
+  };
+
+  // Flat, walkable stone floor inside the walls.
+  addBox(25.2, 0.42, 25.2, 0, castleFloorY - 0.21, 0, floorMaterial);
+  // Slightly irregular large stone blocks make the walls read as masonry.
+  const wallY = castleFloorY + 4.2;
+  const wallH = 8.4;
+  addBox(24, wallH, 1.25, 0, wallY, -12, stone);
+  addBox(1.25, wallH, 24, -12, wallY, 0, stone);
+  addBox(1.25, wallH, 24, 12, wallY, 0, stone);
+  // Leave a six-unit opening in the front wall as the castle entrance.
+  addBox(8.8, wallH, 1.25, -7.6, wallY, 12, stone);
+  addBox(8.8, wallH, 1.25, 7.6, wallY, 12, stone);
+
+  // Horizontal stone courses and a heavier coping along the walls.
+  for (const y of [castleFloorY + 1.1, castleFloorY + 3.2, castleFloorY + 5.3, castleFloorY + 7.5]) {
+    addBox(24.3, 0.13, 1.38, 0, y, -12, stoneDark);
+    addBox(1.38, 0.13, 24.3, -12, y, 0, stoneDark);
+    addBox(1.38, 0.13, 24.3, 12, y, 0, stoneDark);
+    addBox(8.9, 0.13, 1.38, -7.6, y, 12, stoneDark);
+    addBox(8.9, 0.13, 1.38, 7.6, y, 12, stoneDark);
+  }
+  addBox(24.8, 0.42, 1.7, 0, castleFloorY + 8.5, -12, stoneDark);
+  addBox(1.7, 0.42, 24.8, -12, castleFloorY + 8.5, 0, stoneDark);
+  addBox(1.7, 0.42, 24.8, 12, castleFloorY + 8.5, 0, stoneDark);
+  addBox(9.1, 0.42, 1.7, -7.6, castleFloorY + 8.5, 12, stoneDark);
+  addBox(9.1, 0.42, 1.7, 7.6, castleFloorY + 8.5, 12, stoneDark);
+
+  // Four round corner towers with crenellated parapets.
+  for (const [x, z] of [[-12, -12], [12, -12], [-12, 12], [12, 12]]) {
+    const tower = new THREE.Mesh(
+      new THREE.CylinderGeometry(2.25, 2.5, 11, 12),
+      stone
+    );
+    tower.position.set(x, castleFloorY + 5.5, z);
+    tower.castShadow = !isTouchDevice;
+    tower.receiveShadow = !isTouchDevice;
+    castle.add(tower);
+
+    const parapet = new THREE.Mesh(
+      new THREE.CylinderGeometry(2.48, 2.32, 0.65, 12),
+      stoneDark
+    );
+    parapet.position.set(x, castleFloorY + 10.9, z);
+    castle.add(parapet);
+
+    for (let i = 0; i < 8; i++) {
+      const angle = (i / 8) * Math.PI * 2;
+      const merlon = new THREE.Mesh(new THREE.BoxGeometry(0.68, 0.9, 0.62), stone);
+      merlon.position.set(x + Math.cos(angle) * 2.12, castleFloorY + 11.55, z + Math.sin(angle) * 2.12);
+      merlon.lookAt(x, merlon.position.y, z);
+      merlon.castShadow = !isTouchDevice;
+      castle.add(merlon);
+    }
+  }
+
+  // A thick, raised stone frame around the entrance, with no gate or decoration.
+  addBox(0.8, 9.1, 1.8, -3.35, castleFloorY + 4.55, 12, stoneDark);
+  addBox(0.8, 9.1, 1.8, 3.35, castleFloorY + 4.55, 12, stoneDark);
+  addBox(7.5, 1.0, 2.0, 0, castleFloorY + 8.8, 12, stoneDark);
+
+  castle.traverse((object) => {
+    if (object.isMesh && object.geometry) object.geometry.computeBoundingSphere();
+  });
+  scene.add(castle);
+}
+
+function isCastleWallAt(x, z) {
+  const thickness = 0.95;
+  const sideWall = (Math.abs(Math.abs(x) - 12) < thickness && Math.abs(z) < 11.4);
+  const backWall = (Math.abs(z + 12) < thickness && Math.abs(x) < 11.4);
+  const frontWall = Math.abs(z - 12) < thickness && Math.abs(x) < 11.4 && Math.abs(x) > 3.15;
+  const tower = Math.hypot(Math.max(0, Math.abs(x) - 12), Math.max(0, Math.abs(z) - 12)) < 1.35
+    && Math.abs(x) > 10.8 && Math.abs(z) > 10.8;
+  return sideWall || backWall || frontWall || tower;
 }
 
 function makeTerrainChunk(cx, cz) {
@@ -490,7 +584,12 @@ function updatePlayer(delta) {
   const targetSpeed = moveVector.lengthSq() > 0.001 ? (running ? 8.2 : 4.5) : 0;
   player.speed = THREE.MathUtils.damp(player.speed, targetSpeed, 10, delta);
   if (targetSpeed > 0) {
-    player.group.position.addScaledVector(moveVector, player.speed * delta);
+    const stepX = moveVector.x * player.speed * delta;
+    const stepZ = moveVector.z * player.speed * delta;
+    const nextX = player.group.position.x + stepX;
+    const nextZ = player.group.position.z + stepZ;
+    if (!isCastleWallAt(nextX, player.group.position.z)) player.group.position.x = nextX;
+    if (!isCastleWallAt(player.group.position.x, nextZ)) player.group.position.z = nextZ;
     const targetRotation = Math.atan2(-moveVector.x, -moveVector.z);
     let difference = targetRotation - characterRoot.rotation.y;
     difference = Math.atan2(Math.sin(difference), Math.cos(difference));
@@ -499,7 +598,8 @@ function updatePlayer(delta) {
 
   verticalVelocity -= 19 * delta;
   player.group.position.y += verticalVelocity * delta;
-  const floor = terrainHeight(player.group.position.x, player.group.position.z);
+  const insideCastle = Math.abs(player.group.position.x) < 11.1 && Math.abs(player.group.position.z) < 11.1;
+  const floor = insideCastle ? castleFloorY : terrainHeight(player.group.position.x, player.group.position.z);
   if (player.group.position.y <= floor) {
     player.group.position.y = floor;
     verticalVelocity = 0;

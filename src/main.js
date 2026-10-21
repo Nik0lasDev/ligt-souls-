@@ -240,14 +240,13 @@ function terrainHeight(x, z) {
 }
 
 function createCastle() {
-  // A simple, empty stone keep: enclosed hall, four towers and an open gate.
+  // Large, empty keep with multiple floors, divided rooms and walkable ramps.
   castleFloorY = terrainHeight(0, 0);
   const stone = new THREE.MeshStandardMaterial({ color: '#777b80', roughness: 0.96 });
   const stoneDark = new THREE.MeshStandardMaterial({ color: '#555b62', roughness: 1 });
   const floorMaterial = new THREE.MeshStandardMaterial({ color: '#696d70', roughness: 1 });
-  const mortarMaterial = new THREE.MeshStandardMaterial({ color: '#44494e', roughness: 1 });
   const castle = new THREE.Group();
-  const addBox = (w, h, d, x, y, z, material) => {
+  const addBox = (w, h, d, x, y, z, material = stone) => {
     const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), material);
     mesh.position.set(x, y, z);
     mesh.castShadow = !isTouchDevice;
@@ -255,80 +254,131 @@ function createCastle() {
     castle.add(mesh);
     return mesh;
   };
+  const addWallX = (x, z, length, y, h = 6.2, thickness = 0.8) => addBox(thickness, h, length, x, y, z, stone);
+  const addWallZ = (x, z, length, y, h = 6.2, thickness = 0.8) => addBox(length, h, thickness, x, y, z, stone);
+  const baseY = castleFloorY;
+  const wallCenterY = (level) => baseY + level + 3.1;
 
-  // Flat, walkable stone floor inside the walls.
-  addBox(25.2, 0.42, 25.2, 0, castleFloorY - 0.21, 0, floorMaterial);
-  // Slightly irregular large stone blocks make the walls read as masonry.
-  const wallY = castleFloorY + 4.2;
-  const wallH = 8.4;
-  addBox(24, wallH, 1.25, 0, wallY, -12, stone);
-  addBox(1.25, wallH, 24, -12, wallY, 0, stone);
-  addBox(1.25, wallH, 24, 12, wallY, 0, stone);
-  // Leave a six-unit opening in the front wall as the castle entrance.
-  addBox(8.8, wallH, 1.25, -7.6, wallY, 12, stone);
-  addBox(8.8, wallH, 1.25, 7.6, wallY, 12, stone);
+  // 64 x 64 footprint with a broad entrance at the south side.
+  addBox(62, 0.65, 62, 0, baseY - 0.325, 0, floorMaterial);
+  const outerY = baseY + 5.5;
+  addWallZ(0, -31, 62, outerY, 11, 1.8);
+  addWallX(-31, 0, 62, outerY, 11, 1.8);
+  addWallX(31, 0, 62, outerY, 11, 1.8);
+  addWallZ(-21, 31, 20, outerY, 11, 1.8);
+  addWallZ(21, 31, 20, outerY, 11, 1.8);
+  // Heavy parapet caps.
+  addBox(63, 0.8, 2.2, 0, baseY + 11.2, -31, stoneDark);
+  addBox(2.2, 0.8, 63, -31, baseY + 11.2, 0, stoneDark);
+  addBox(2.2, 0.8, 63, 31, baseY + 11.2, 0, stoneDark);
+  addBox(20.5, 0.8, 2.2, -21, baseY + 11.2, 31, stoneDark);
+  addBox(20.5, 0.8, 2.2, 21, baseY + 11.2, 31, stoneDark);
 
-  // Horizontal stone courses and a heavier coping along the walls.
-  for (const y of [castleFloorY + 1.1, castleFloorY + 3.2, castleFloorY + 5.3, castleFloorY + 7.5]) {
-    addBox(24.3, 0.13, 1.38, 0, y, -12, stoneDark);
-    addBox(1.38, 0.13, 24.3, -12, y, 0, stoneDark);
-    addBox(1.38, 0.13, 24.3, 12, y, 0, stoneDark);
-    addBox(8.9, 0.13, 1.38, -7.6, y, 12, stoneDark);
-    addBox(8.9, 0.13, 1.38, 7.6, y, 12, stoneDark);
-  }
-  addBox(24.8, 0.42, 1.7, 0, castleFloorY + 8.5, -12, stoneDark);
-  addBox(1.7, 0.42, 24.8, -12, castleFloorY + 8.5, 0, stoneDark);
-  addBox(1.7, 0.42, 24.8, 12, castleFloorY + 8.5, 0, stoneDark);
-  addBox(9.1, 0.42, 1.7, -7.6, castleFloorY + 8.5, 12, stoneDark);
-  addBox(9.1, 0.42, 1.7, 7.6, castleFloorY + 8.5, 12, stoneDark);
-
-  // Four round corner towers with crenellated parapets.
-  for (const [x, z] of [[-12, -12], [12, -12], [-12, 12], [12, 12]]) {
-    const tower = new THREE.Mesh(
-      new THREE.CylinderGeometry(2.25, 2.5, 11, 12),
-      stone
-    );
-    tower.position.set(x, castleFloorY + 5.5, z);
+  // Four tall round towers and crenellations.
+  for (const [x, z] of [[-31, -31], [31, -31], [-31, 31], [31, 31]]) {
+    const tower = new THREE.Mesh(new THREE.CylinderGeometry(3.8, 4.2, 15, 12), stone);
+    tower.position.set(x, baseY + 7.5, z);
     tower.castShadow = !isTouchDevice;
     tower.receiveShadow = !isTouchDevice;
     castle.add(tower);
-
-    const parapet = new THREE.Mesh(
-      new THREE.CylinderGeometry(2.48, 2.32, 0.65, 12),
-      stoneDark
-    );
-    parapet.position.set(x, castleFloorY + 10.9, z);
-    castle.add(parapet);
-
-    for (let i = 0; i < 8; i++) {
-      const angle = (i / 8) * Math.PI * 2;
-      const merlon = new THREE.Mesh(new THREE.BoxGeometry(0.68, 0.9, 0.62), stone);
-      merlon.position.set(x + Math.cos(angle) * 2.12, castleFloorY + 11.55, z + Math.sin(angle) * 2.12);
-      merlon.lookAt(x, merlon.position.y, z);
-      merlon.castShadow = !isTouchDevice;
-      castle.add(merlon);
+    const rim = new THREE.Mesh(new THREE.CylinderGeometry(4.1, 3.8, 0.8, 12), stoneDark);
+    rim.position.set(x, baseY + 15, z);
+    castle.add(rim);
+    for (let i = 0; i < 10; i++) {
+      const angle = i * Math.PI * 2 / 10;
+      const block = new THREE.Mesh(new THREE.BoxGeometry(0.9, 1.2, 0.85), stone);
+      block.position.set(x + Math.cos(angle) * 3.75, baseY + 15.9, z + Math.sin(angle) * 3.75);
+      block.lookAt(x, block.position.y, z);
+      castle.add(block);
     }
   }
 
-  // A thick, raised stone frame around the entrance, with no gate or decoration.
-  addBox(0.8, 9.1, 1.8, -3.35, castleFloorY + 4.55, 12, stoneDark);
-  addBox(0.8, 9.1, 1.8, 3.35, castleFloorY + 4.55, 12, stoneDark);
-  addBox(7.5, 1.0, 2.0, 0, castleFloorY + 8.8, 12, stoneDark);
+  // Main hall partitions on the ground floor, leaving door-sized passages.
+  const roomY = baseY + 3.1;
+  addWallX(-10, 0, 43, roomY); addWallX(10, 0, 43, roomY);
+  addWallZ(0, -10, 20, roomY); addWallZ(-20, 10, 22, roomY);
+  addWallZ(20, 10, 22, roomY);
+  // Cross walls are split around openings so every room remains accessible.
+  addWallZ(-10, -20, 15, roomY); addWallZ(10, -20, 15, roomY);
+  addWallZ(-10, 20, 15, roomY); addWallZ(10, 20, 15, roomY);
+  // Interior stone courses make the otherwise empty architecture readable.
+  for (const level of [2.2, 4.5, 6.8, 9.1]) {
+    addBox(62, 0.16, 1.95, 0, baseY + level, -31, stoneDark);
+    addBox(1.95, 0.16, 62, -31, baseY + level, 0, stoneDark);
+    addBox(1.95, 0.16, 62, 31, baseY + level, 0, stoneDark);
+  }
 
-  castle.traverse((object) => {
-    if (object.isMesh && object.geometry) object.geometry.computeBoundingSphere();
-  });
+  // Second and third floors: open central gallery plus separate side chambers.
+  const secondY = baseY + 6.4;
+  addBox(53, 0.55, 15, 0, secondY - 0.275, -22, floorMaterial);
+  addBox(15, 0.55, 29, -22, secondY - 0.275, 0, floorMaterial);
+  addBox(15, 0.55, 29, 22, secondY - 0.275, 0, floorMaterial);
+  addBox(53, 0.55, 15, 0, secondY - 0.275, 22, floorMaterial);
+  const thirdY = baseY + 12.8;
+  addBox(19, 0.55, 19, -20, thirdY - 0.275, -20, floorMaterial);
+  addBox(19, 0.55, 19, 20, thirdY - 0.275, -20, floorMaterial);
+  addBox(19, 0.55, 19, -20, thirdY - 0.275, 20, floorMaterial);
+  addBox(19, 0.55, 19, 20, thirdY - 0.275, 20, floorMaterial);
+
+  // Upper-level room dividers.
+  for (const levelY of [secondY, thirdY]) {
+    addWallX(-22, 0, 28, levelY + 3.1, 6.2, 0.65);
+    addWallX(22, 0, 28, levelY + 3.1, 6.2, 0.65);
+    addWallZ(0, -22, 18, levelY + 3.1, 6.2, 0.65);
+    addWallZ(0, 22, 18, levelY + 3.1, 6.2, 0.65);
+  }
+
+  // Broad sloped stone ramps connect the levels; they are deliberately bare.
+  const addRamp = (x, z, bottomY, height, length, width, rotation = 0) => {
+    const ramp = addBox(width, 0.7, length, x, bottomY + height / 2, z, floorMaterial);
+    ramp.rotation.x = -Math.atan2(height, length);
+    ramp.rotation.y = rotation;
+    ramp.position.y = bottomY + height / 2;
+  };
+  addRamp(-5, -21, baseY + 0.2, 6.2, 18, 5);
+  addRamp(5, 21, secondY + 0.2, 6.2, 18, 5, Math.PI);
+  // Stair-step blocks alongside the ramps provide a clear visual cue.
+  for (let i = 0; i < 12; i++) {
+    const stepH = (i + 1) * 0.5;
+    addBox(4.8, 0.18, 1.15, -5, baseY + stepH, -29 + i * 1.35, stoneDark);
+  }
+
+  // Entrance portal frame, left empty without a gate or props.
+  addBox(1.4, 12, 2.2, -5.2, baseY + 6, 31, stoneDark);
+  addBox(1.4, 12, 2.2, 5.2, baseY + 6, 31, stoneDark);
+  addBox(12, 1.5, 2.4, 0, baseY + 11.8, 31, stoneDark);
   scene.add(castle);
 }
 
+function castleFloorHeightAt(x, z) {
+  const ax = Math.abs(x), az = Math.abs(z);
+  if (ax < 31 && az < 31) {
+    // A pair of broad ramps connect the ground floor, second floor and upper galleries.
+    if (x > -8 && x < -2 && z < -12 && z > -30) {
+      return castleFloorY + 0.2 + ((-12 - z) / 18) * 6.2;
+    }
+    if (x > 2 && x < 8 && z > 12 && z < 30) {
+      return castleFloorY + 6.6 + ((z - 12) / 18) * 6.2;
+    }
+    if (z < -14 && z > -30 && x > -30 && x < -14) return castleFloorY + 6.4;
+    if (z < -14 && z > -30 && x > 14 && x < 30) return castleFloorY + 6.4;
+    if (z > 14 && z < 30 && x > -30 && x < -14) return castleFloorY + 6.4;
+    if (z > 14 && z < 30 && x > 14 && x < 30) return castleFloorY + 6.4;
+  }
+  return terrainHeight(x, z);
+}
+
 function isCastleWallAt(x, z) {
-  const thickness = 0.95;
-  const sideWall = (Math.abs(Math.abs(x) - 12) < thickness && Math.abs(z) < 11.4);
-  const backWall = (Math.abs(z + 12) < thickness && Math.abs(x) < 11.4);
-  const frontWall = Math.abs(z - 12) < thickness && Math.abs(x) < 11.4 && Math.abs(x) > 3.15;
-  const tower = Math.hypot(Math.max(0, Math.abs(x) - 12), Math.max(0, Math.abs(z) - 12)) < 1.35
-    && Math.abs(x) > 10.8 && Math.abs(z) > 10.8;
-  return sideWall || backWall || frontWall || tower;
+  const ax = Math.abs(x), az = Math.abs(z);
+  const outer = (Math.abs(ax - 31) < 1.15 && az < 30.5)
+    || (Math.abs(z + 31) < 1.15 && ax < 30.5)
+    || (Math.abs(z - 31) < 1.15 && ax < 30.5 && ax > 6.1);
+  if (outer) return true;
+  // Ground-floor room partitions, with openings left for doorways.
+  if (Math.abs(ax - 10) < 0.65 && az < 29 && !(az > 2.2 && az < 6.2) && !(az > 16 && az < 20)) return true;
+  if (Math.abs(z + 10) < 0.65 && ax < 10 && !(ax > 2.2 && ax < 6.2)) return true;
+  if (Math.abs(z - 10) < 0.65 && ax > 10 && ax < 30 && !(ax > 15 && ax < 19)) return true;
+  return false;
 }
 
 function makeTerrainChunk(cx, cz) {
@@ -384,7 +434,7 @@ function addVegetation(group, cx, cz) {
     const rz = (random(i + 21) * 0.88 + 0.06) * CHUNK_SIZE;
     const worldX = cx * CHUNK_SIZE - CHUNK_SIZE / 2 + rx;
     const worldZ = cz * CHUNK_SIZE - CHUNK_SIZE / 2 + rz;
-    if (Math.hypot(worldX, worldZ) < 9) continue;
+    if (Math.abs(worldX) < 34 && Math.abs(worldZ) < 34) continue;
     const h = terrainHeight(worldX, worldZ);
     if (h > 4.2) continue;
     const scale = 0.72 + random(i + 40) * 0.75;
@@ -410,7 +460,7 @@ function addVegetation(group, cx, cz) {
     const rz = random(i + 190) * CHUNK_SIZE;
     const worldX = cx * CHUNK_SIZE - CHUNK_SIZE / 2 + rx;
     const worldZ = cz * CHUNK_SIZE - CHUNK_SIZE / 2 + rz;
-    if (Math.hypot(worldX, worldZ) < 7) continue;
+    if (Math.abs(worldX) < 34 && Math.abs(worldZ) < 34) continue;
     const blade = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.38, 3), grassMaterial);
     blade.position.set(worldX, terrainHeight(worldX, worldZ) + 0.13, worldZ);
     blade.rotation.z = (random(i + 220) - 0.5) * 0.35;
@@ -598,8 +648,7 @@ function updatePlayer(delta) {
 
   verticalVelocity -= 19 * delta;
   player.group.position.y += verticalVelocity * delta;
-  const insideCastle = Math.abs(player.group.position.x) < 11.1 && Math.abs(player.group.position.z) < 11.1;
-  const floor = insideCastle ? castleFloorY : terrainHeight(player.group.position.x, player.group.position.z);
+  const floor = castleFloorHeightAt(player.group.position.x, player.group.position.z);
   if (player.group.position.y <= floor) {
     player.group.position.y = floor;
     verticalVelocity = 0;

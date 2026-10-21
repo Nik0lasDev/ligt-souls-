@@ -5,6 +5,10 @@
 
 **Um protótipo de exploração 3D com terreno procedural e um mundo que cresce conforme você caminha.**
 
+[![JOGAR AGORA](https://img.shields.io/badge/▶_JOGAR_AGORA-ABRIR_JOGO-d4f477?style=for-the-badge&labelColor=17231e)](https://nik0lasdev.github.io/ligt-souls-/)
+
+> **🎮 [CLIQUE AQUI PARA JOGAR NO NAVEGADOR](https://nik0lasdev.github.io/ligt-souls-/)** — sem instalar nada.
+
 [![JavaScript](https://img.shields.io/badge/JavaScript-ES2022-f7df1e?style=for-the-badge&logo=javascript&logoColor=111)](https://developer.mozilla.org/docs/Web/JavaScript)
 [![Three.js](https://img.shields.io/badge/Three.js-3D_ENGINE-black?style=for-the-badge&logo=threedotjs)](https://threejs.org/)
 [![Vite](https://img.shields.io/badge/Vite-DEV_SERVER-646cff?style=for-the-badge&logo=vite&logoColor=white)](https://vite.dev/)
@@ -33,7 +37,15 @@ O objetivo desta primeira versão é estabelecer uma base jogável, leve e fáci
 
 > **Nota:** “infinito” descreve a geração contínua de setores durante a exploração. O protótipo ainda não possui otimização de streaming em segundo plano, salvamento, combate ou colisões físicas completas com árvores.
 
-## 🚀 Como executar
+## 🎮 Jogar online
+
+Use este link para abrir o jogo diretamente no navegador:
+
+**➡️ [https://nik0lasdev.github.io/ligt-souls-/](https://nik0lasdev.github.io/ligt-souls-/)**
+
+A primeira publicação é feita automaticamente pelo GitHub Actions após o envio dos arquivos. Se o site ainda não estiver disponível, aguarde a conclusão do fluxo em [Actions](https://github.com/Nik0lasDev/ligt-souls-/actions) e confira se **Settings → Pages → Build and deployment → Source** está definido como **GitHub Actions**.
+
+## 🚀 Como executar localmente
 
 Você precisa de uma versão recente do [Node.js](https://nodejs.org/) e do npm.
 

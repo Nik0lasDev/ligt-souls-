@@ -176,7 +176,7 @@ const legs=[];
 for(const x of [-.15,.15]) legs.push(part(playerBody,new THREE.BoxGeometry(.17,.62,.2),mats.cloth,x,.38,0));
 const playerRadius=.42;
 player.position.set(0,0,10);
-let yaw=Math.PI, pitch=-.12, cameraDistance=5.7, cameraHeight=2.55;
+let yaw=0, pitch=-.12, cameraDistance=5.7, cameraHeight=2.55;
 let started=false, paused=false, dead=false, locked=false, bonfireLit=false;
 const keys={};
 let health=100, stamina=100, souls=0, attackTimer=0,dodgeTimer=0, invuln=0, enemyAttack=0;
@@ -226,7 +226,7 @@ function updateCamera(dt){
  const target=new THREE.Vector3(player.position.x,player.position.y+1.45,player.position.z);
  if(locked&&enemy.alive){
    const d=new THREE.Vector3(enemy.group.position.x-player.position.x,0,enemy.group.position.z-player.position.z);
-   yaw=Math.atan2(d.x,d.z);
+   yaw=Math.atan2(-d.x,-d.z);
  }
  const cp=Math.cos(pitch),sp=Math.sin(pitch);
  const offset=new THREE.Vector3(Math.sin(yaw)*cameraDistance*cp,cameraHeight-sp*cameraDistance,Math.cos(yaw)*cameraDistance*cp);
@@ -301,7 +301,7 @@ function enemyAI(e,dt,isBoss=false){
 function resetGame(){
  health=100;stamina=100;souls=0;dead=false;paused=false;enemy.hp=enemy.maxHp;enemy.alive=true;enemy.group.visible=true;enemy.group.position.copy(enemy.home);enemy.state='idle';enemy.alert=false;enemy.cooldown=0;
  undeads.forEach(e=>{e.hp=35;e.alive=true;e.alert=false;e.group.visible=true;e.group.position.copy(e.home);e.cooldown=0;});
- player.position.set(0,0,10);yaw=Math.PI;pitch=-.12;locked=false;
+ player.position.set(0,0,10);yaw=0;pitch=-.12;locked=false;
  $('death-screen').classList.add('hidden');$('pause-menu').classList.add('hidden');$('intro').classList.add('hidden');$('hud').classList.remove('hidden');
  started=true;requestPointerLock();showToast('CEMITÉRIO DAS CINZAS · PRIMEIRO FOGO');
 }

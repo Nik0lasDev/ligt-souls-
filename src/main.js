@@ -269,10 +269,13 @@ function updateHud(){
  $('health-fill').style.width=Math.max(0,health)+'%';
  $('stamina-fill').style.width=Math.max(0,stamina)+'%';
  $('boss-health-fill').style.width=(enemy.hp/enemy.maxHp*100)+'%';
- $('boss-ui').classList.toggle('hidden',!enemy.alive||!started||player.position.distanceTo(enemy.group.position)>18);
+ $('boss-ui').classList.toggle('hidden',!enemy.alive||!bossAwakened||!started||player.position.distanceTo(enemy.group.position)>24);
  $('souls').textContent=String(souls).padStart(4,'0');
  $('lock-label').classList.toggle('on',locked);
- $('bonfire-prompt').classList.toggle('visible',player.position.distanceTo(bonfire.position)<3.1&&started&&!paused);
+ const nearFire=player.position.distanceTo(bonfire.position)<3.1;
+ const nearSword=!bossAwakened&&player.position.distanceTo(coiledSword.position)<3.2;
+ $('bonfire-prompt').textContent=nearFire?'[ E ] DESCANSAR NA FOGUEIRA':'[ E ] RETIRAR A ESPADA';
+ $('bonfire-prompt').classList.toggle('visible',(nearFire||nearSword)&&started&&!paused);
 }
 function damagePlayer(amount){
  if(invuln>0||dead)return;
@@ -286,6 +289,7 @@ function attack(){
  let target=null,dist=2.35;
  const candidates=[...(enemy.alive?[enemy]:[]),...undeads.filter(e=>e.alive)];
  for(const e of candidates){
+  if(e===enemy&&!bossAwakened)continue;
   const d=player.position.distanceTo(e.group.position);
   if(d<dist){const dir=new THREE.Vector3(e.group.position.x-player.position.x,0,e.group.position.z-player.position.z).normalize();
    const facing=new THREE.Vector3(-Math.sin(yaw),0,-Math.cos(yaw));
@@ -309,7 +313,8 @@ function dodge(){
  moveWithCollision(player,dx*2.1,dz*2.1);
 }
 function enemyAI(e,dt,isBoss=false){
- if(!e.alive)return;
+ if(!e.alive||(isBoss&&!bossAwakened))return;
+ if(isBoss&&bossWakeTimer>0){bossWakeTimer=Math.max(0,bossWakeTimer-dt);e.group.rotation.x=THREE.MathUtils.damp(e.group.rotation.x,0,1.5,dt);return;}
  e.cooldown=Math.max(0,e.cooldown-dt);
  const d=e.group.position.distanceTo(player.position);
  const alertRange=isBoss?18:8;
@@ -331,7 +336,7 @@ function enemyAI(e,dt,isBoss=false){
  }
 }
 function resetGame(){
- health=100;stamina=100;souls=0;dead=false;paused=false;enemy.hp=enemy.maxHp;enemy.alive=true;enemy.group.visible=true;enemy.group.position.copy(enemy.home);enemy.state='idle';enemy.alert=false;enemy.cooldown=0;
+ health=100;stamina=100;souls=0;dead=false;paused=false;enemy.hp=enemy.maxHp;enemy.alive=true;enemy.group.visible=true;enemy.group.position.copy(enemy.home);enemy.group.rotation.x=1.15;enemy.state='dormant';enemy.alert=false;enemy.cooldown=0;bossAwakened=false;bossWakeTimer=0;coiledSword.visible=true;
  undeads.forEach(e=>{e.hp=35;e.alive=true;e.alert=false;e.group.visible=true;e.group.position.copy(e.home);e.cooldown=0;});
  player.position.set(0,0,10);yaw=0;pitch=-.12;locked=false;
  $('death-screen').classList.add('hidden');$('pause-menu').classList.add('hidden');$('intro').classList.add('hidden');$('hud').classList.remove('hidden');
@@ -355,6 +360,7 @@ document.addEventListener('keydown',(e)=>{
  if(e.code==='Tab'&&started){e.preventDefault();locked=!locked;showToast(locked?'ALVO FIXADO':'ALVO LIBERADO');}
  if(e.code==='KeyE'&&started&&!paused){
   if(player.position.distanceTo(bonfire.position)<3.1){health=100;stamina=100;bonfireLit=true;fireLight.intensity=6;showToast('DESCANSOU NA FOGUEIRA');}
+  else if(!bossAwakened&&player.position.distanceTo(coiledSword.position)<3.2){bossAwakened=true;bossWakeTimer=2.8;enemy.alert=false;coiledSword.visible=false;swordGlow.intensity=0;showToast('A ESPADA FOI RETIRADA · O JUIZ DESPERTA');}
   else showToast('NADA PARA INTERAGIR');
  }
  if(e.code==='KeyF')attack();
@@ -380,6 +386,7 @@ function animate(){
  requestAnimationFrame(animate);
  const dt=Math.min(clock.getDelta(),.04),time=performance.now()*.001;
  flame.scale.set(1+.12*Math.sin(time*13),1+.2*Math.sin(time*17),1+.1*Math.cos(time*11));
+ if(!bossAwakened){coiledSword.rotation.z=Math.sin(time*1.2)*.025;swordGlow.intensity=.55+.2*Math.sin(time*2.4);}
  fireLight.intensity=(bonfireLit?5.5:3.6)+Math.sin(time*12)*.5;
  emberParticles.forEach(p=>{p.mesh.position.y=p.base.y+(time*p.speed%1.8);p.mesh.position.x=p.base.x+Math.sin(time*2+p.speed)*.15;});
  if(started&&!paused&&!dead){
@@ -402,8 +409,9 @@ function animate(){
   updateCamera(dt);updateHud();
   $('coordinates').textContent='CEMITÉRIO DAS CINZAS';
   $('movement-label').textContent=moving?'MOVENDO-SE':'EM GUARDA';
-  if(player.position.z<-42)$('area-name').textContent='SANTUÁRIO EM RUÍNAS';
-  else if(player.position.z<-22)$('area-name').textContent='PORTÃO DO CEMITÉRIO';
+  if(player.position.z<-46)$('area-name').textContent='CAMPO DO JUIZ';
+  else if(player.position.z<-38)$('area-name').textContent='PORTÃO EM RUÍNAS';
+  else if(player.position.z<-18)$('area-name').textContent='CAMINHO DOS TÚMULOS';
   else $('area-name').textContent='CEMITÉRIO DAS CINZAS';
  }else if(!started){
   camera.position.set(Math.sin(time*.08)*18,8,17);camera.lookAt(0,1,-25);

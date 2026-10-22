@@ -113,6 +113,13 @@ for(let i=0;i<82;i++){
 }
 for(let i=0;i<32;i++){const z=12-Math.random()*55,side=Math.random()<.5?-1:1;tree(pathX(z)+side*(12+Math.random()*18),z,5+Math.random()*8);}
 // Collapsed steps and a broken arch establish the first landmark.
+function arch(x,z,scale=1) {
+  const w=5.5*scale,h=6.5*scale;
+  box(x-w/2+.35*scale,h/2,z,.7*scale,h,1.1*scale,mats.stoneDark,true);
+  box(x+w/2-.35*scale,h/2,z,.7*scale,h,1.1*scale,mats.stoneDark,true);
+  box(x,h-.2*scale,z,w,.65*scale,1.3*scale,mats.stone,true);
+  for(let s of [-1,1]) for(let i=0;i<3;i++) stone(x+s*w/2,h+(.5+i*.5)*scale,z,1.1*scale,.4*scale,1.2*scale,mats.stoneDark);
+}
 for(let i=0;i<5;i++)box(pathX(15-i*1.1),-.03+i*.1,15-i*1.1,3.6-i*.25,.18,1.1,mats.stoneDark,false,false);
 arch(pathX(-4),-4,.82);
 // Ruined gate between the cemetery and the arena.

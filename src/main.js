@@ -102,11 +102,19 @@ for(let z=19;z>-65;z-=1.55){
  slab.rotation.y=(Math.random()-.5)*.07;
  if(Math.random()<.3)stone(x+(Math.random()-.5)*1.6,.04,z+(Math.random()-.5)*.7,.5+Math.random()*.7,.08,.45,mats.stoneDark);
 }
-// Irregular stone banks define the path without closing it with invisible collision planes.
-for(const side of [-1,1])for(let z=15;z>-44;z-=2.7){
- const x=pathX(z)+side*(6+Math.random()*2.5),h=1.2+Math.random()*3.3;
- stone(x,h/2,z,1.4+Math.random()*2.2,h,1.8+Math.random()*2.2,Math.random()>.35?mats.stoneDark:mats.stone,true);
- if(Math.random()<.45)rubble(x,h*.55,z,.7+Math.random()*.6);
+// Tighter cemetery corridor: overlapping, collidable ruined wall segments close in around the route.
+for(const side of [-1,1]){
+ for(let z=14;z>-43;z-=2.25){
+  const x=pathX(z)+side*(4.7+Math.random()*.45);
+  const h=2.5+Math.random()*2.4;
+  box(x,h/2,z,1.25,h,2.65,Math.random()>.3?mats.stoneDark:mats.stone,true);
+  // Broken upper stones make the wall look irregular without extra invisible barriers.
+  if(Math.random()<.68){
+   const cap=stone(x+side*(Math.random()*.25),h+.18,z+(Math.random()-.5)*.45,.8+Math.random()*.65,.45+Math.random()*.65,.8+Math.random()*.7,mats.stoneLight);
+   cap.rotation.z=(Math.random()-.5)*.18;
+  }
+  if(Math.random()<.32)rubble(x,h*.55,z,.55+Math.random()*.45);
+ }
 }
 // Graves and dead trees are placed in readable clusters away from the center lane.
 for(let i=0;i<82;i++){
@@ -141,10 +149,10 @@ for(let x=-11;x<=10;x+=2.15)for(let z=-48;z>=-64;z-=2.15){
  const slab=box(arenaX+x+(Math.random()-.5)*.25,-.105,z+(Math.random()-.5)*.25,2+Math.random()*.3,.18,2+Math.random()*.3,mats.stoneDark,false,false);
  slab.rotation.y=(Math.random()-.5)*.05;
 }
-for(const side of [-1,1])for(let z=-49;z>=-63;z-=3.8){
- const x=arenaX+side*(11+Math.random()*1.4),h=2.5+Math.random()*3.4;
- stone(x,h/2,z,1.6,h,2.1,mats.stoneDark,true);
- if(Math.random()<.65)stone(x,h+.35,z,.7,.7,.8,mats.stone);
+for(const side of [-1,1])for(let z=-48.5;z>=-63.5;z-=2.35){
+ const x=arenaX+side*(8.8+Math.random()*.45),h=3+Math.random()*3.1;
+ box(x,h/2,z,1.7,h,2.75,mats.stoneDark,true);
+ if(Math.random()<.72)stone(x+side*.12,h+.25,z,.85,.6,.9,mats.stone);
 }
 for(let i=0;i<18;i++)rubble(arenaX+(Math.random()-.5)*21,.05,-48-Math.random()*15,.8+Math.random()*.7);
 // Ruined chapel silhouette at the far end.

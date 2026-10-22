@@ -1,64 +1,60 @@
 <!doctype html>
 <html lang="pt-BR">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="theme-color" content="#101a19" />
-    <meta name="description" content="Explore um castelo 3D de pedra em primeira pessoa." />
-    <title>Light Souls — O Castelo</title>
-  </head>
-  <body>
-    <div id="app">
-      <div id="game"></div>
-      <header class="topbar">
-        <a class="brand" href="#" aria-label="Light Souls início">
-          <span class="brand-mark">LS</span>
-          <span><strong>LIGHT SOULS</strong><small>THE CASTLE</small></span>
-        </a>
-        <div class="status"><span class="status-dot"></span><span id="world-status">Gerando mundo</span></div>
-      </header>
-
-      <section class="intro" id="intro">
-        <div class="eyebrow"><span></span> EXPLORAÇÃO 3D · CASTELO</div>
-        <h1>Um mundo.<br /><em>Sem fim.</em></h1>
-        <p>Explore um castelo antigo, seus salões de pedra, muralhas e torres. Todo o mundo jogável é o próprio castelo.</p>
-        <button id="start-button" class="primary-button">Entrar no mundo <span>↗</span></button>
-        <div class="intro-note">UM CASTELO ISOLADO <i></i> EXPLORAÇÃO EM PRIMEIRA PESSOA</div>
-      </section>
-
-      <aside class="hud" id="hud">
-        <div class="hud-location"><span class="hud-label">LOCALIZAÇÃO</span><strong id="coordinates">X 0 · Z 0</strong></div>
-        <div class="hud-speed"><span class="speed-dot"></span><span id="movement-label">PARADO</span></div>
-      </aside>
-
-      <div class="crosshair" id="crosshair"><span></span><span></span></div>
-
-      <section class="pause-menu" id="pause-menu" aria-hidden="true">
-        <div class="pause-panel">
-          <div class="eyebrow"><span></span> PAUSA · LIGHT SOULS</div>
-          <h2>Respire.<br /><em>O mundo espera.</em></h2>
-          <p>O jogo está pausado e o mouse foi liberado.</p>
-          <button id="resume-button" class="primary-button">Continuar <span>↗</span></button>
-          <div class="pause-note"><kbd>ESC</kbd> RETOMAR / LIBERAR MOUSE</div>
-        </div>
-      </section>
-
-      <div class="controls-hint" id="controls-hint">
-        <div><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd><span> MOVER</span></div>
-        <div><kbd>SHIFT</kbd><span> CORRER</span></div>
-        <div><kbd>ESPAÇO</kbd><span> PULAR</span></div>
-        <div><kbd>MOUSE</kbd><span> CÂMERA</span></div>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#171b1c">
+  <meta name="description" content="Uma recriação independente e feita por fãs da abertura de Dark Souls III, no Cemitério das Cinzas.">
+  <title>Dark Souls III — Cemitério das Cinzas | Fan Project</title>
+</head>
+<body>
+  <main id="app">
+    <div id="game"></div>
+    <div class="vignette"></div>
+    <header class="topbar">
+      <div class="brand"><span class="brand-mark">✦</span><div><strong>DARK SOULS III</strong><small>ASHEN ONE · FAN PROJECT</small></div></div>
+      <div class="top-status"><i></i><span>LOTHRIC · ERA DAS CINZAS</span></div>
+    </header>
+    <section class="intro" id="intro">
+      <div class="eyebrow">UMA RECRIAÇÃO FEITA POR FÃS</div>
+      <h1>DARK SOULS <em>III</em></h1>
+      <div class="intro-rule"></div>
+      <h2>CEMITÉRIO DAS CINZAS</h2>
+      <p>Erga-se, Cinzento. A chama está fraca, os mortos despertam e o caminho até o primeiro portão não será gentil.</p>
+      <button id="start-button" class="primary-button">INICIAR JORNADA <span>→</span></button>
+      <div class="intro-footer">PROTÓTIPO JOGÁVEL · ÁREA INICIAL · VERSÃO 0.2</div>
+    </section>
+    <section id="hud" class="hud hidden">
+      <div class="bars">
+        <div class="status-row"><span>PV</span><div class="bar hp"><i id="health-fill"></i></div><b>♡</b></div>
+        <div class="status-row"><span>VIGOR</span><div class="bar stamina"><i id="stamina-fill"></i></div></div>
       </div>
-
-      <div class="mobile-controls" id="mobile-controls">
-        <div class="joystick" id="joystick"><div class="joystick-knob" id="joystick-knob"></div></div>
-        <div class="mobile-actions"><button id="run-touch" aria-label="Correr">↗</button><button id="jump-touch" aria-label="Pular">↑</button></div>
-        <p>ARRASTE PARA MOVER · TOQUE DIREITO PARA GIRAR A CÂMERA</p>
-      </div>
-
-      <div class="bottom-bar"><span>LIGHT SOULS <b>·</b> BUILD 0.1.0</span><span>SOMENTE O CASTELO</span></div>
-      <div id="error-message" role="alert"></div>
+      <div class="area-label"><small>LOTHRIC</small><strong id="area-name">CEMITÉRIO DAS CINZAS</strong></div>
+      <div class="souls-counter"><span>✧</span><b id="souls">0000</b></div>
+      <div class="lock-label" id="lock-label">ALVO FIXADO</div>
+      <div class="bonfire-prompt" id="bonfire-prompt">[ E ] DESCANSAR NA FOGUEIRA</div>
+    </section>
+    <section id="boss-ui" class="boss-ui hidden">
+      <div class="boss-name">GUARDIÃO DO PORTÃO</div>
+      <div class="boss-bar"><i id="boss-health-fill"></i></div>
+    </section>
+    <div class="crosshair"><span></span></div>
+    <div class="toast" id="toast"></div>
+    <section class="pause-menu hidden" id="pause-menu">
+      <div class="pause-panel"><div class="eyebrow">A CHAMA AGUARDA</div><h2>Jornada<br><em>interrompida.</em></h2><p>O mundo permanece à sua espera.</p><button id="resume-button" class="primary-button">RETOMAR <span>→</span></button><small>ESC · VOLTAR AO JOGO</small></div>
+    </section>
+    <section class="death-screen hidden" id="death-screen">
+      <h2>VOCÊ <em>MORREU</em></h2><p>As cinzas aguardam seu retorno.</p><button id="restart-button" class="primary-button">RESSURGIR</button>
+    </section>
+    <div class="bottom-left"><span id="movement-label">EM GUARDA</span><span id="coordinates">CEMITÉRIO DAS CINZAS</span></div>
+    <div class="controls">
+      <span><kbd>W A S D</kbd> MOVER</span><span><kbd>SHIFT</kbd> CORRER</span><span><kbd>ESPAÇO</kbd> ESQUIVAR</span><span><kbd>CLIQUE / F</kbd> ATACAR</span><span><kbd>TAB</kbd> FIXAR ALVO</span><span><kbd>E</kbd> FOGUEIRA</span>
     </div>
-    <script type="module" src="/src/main.js"></script>
-  </body>
+    <div class="touch-controls">
+      <button id="touch-move">AVANÇAR</button><button id="touch-dodge">ESQUIVA</button><button id="touch-attack">ATACAR</button><button id="touch-lock">ALVO</button>
+    </div>
+    <div class="disclaimer">PROJETO DE FÃ NÃO OFICIAL · SEM ASSETS ORIGINAIS DA FROM SOFTWARE</div>
+  </main>
+  <script type="module" src="/src/main.js"></script>
+</body>
 </html>

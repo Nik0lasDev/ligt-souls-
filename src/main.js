@@ -247,7 +247,7 @@ function updateHud(){
  $('health-fill').style.width=Math.max(0,health)+'%';
  $('stamina-fill').style.width=Math.max(0,stamina)+'%';
  $('boss-health-fill').style.width=(enemy.hp/enemy.maxHp*100)+'%';
- $('boss-ui').classList.toggle('hidden',!enemy.alive||!started);
+ $('boss-ui').classList.toggle('hidden',!enemy.alive||!started||player.position.distanceTo(enemy.group.position)>18);
  $('souls').textContent=String(souls).padStart(4,'0');
  $('lock-label').classList.toggle('on',locked);
  $('bonfire-prompt').classList.toggle('visible',player.position.distanceTo(bonfire.position)<3.1&&started&&!paused);
@@ -261,13 +261,14 @@ function attack(){
  if(!started||paused||dead||attackTimer>0||stamina<15)return;
  attackTimer=.55;stamina-=15;
  swordArm.rotation.z=-1.25;
- let target=null,dist=4.2;
+ let target=null,dist=2.35;
  const candidates=[...(enemy.alive?[enemy]:[]),...undeads.filter(e=>e.alive)];
  for(const e of candidates){
   const d=player.position.distanceTo(e.group.position);
   if(d<dist){const dir=new THREE.Vector3(e.group.position.x-player.position.x,0,e.group.position.z-player.position.z).normalize();
    const facing=new THREE.Vector3(-Math.sin(yaw),0,-Math.cos(yaw));
-   if(dir.dot(facing)>.1){target=e;dist=d;}
+   const reach=e===enemy?2.8:1.9;
+   if(d<=reach&&dir.dot(facing)>.48){target=e;dist=d;}
   }
  }
  if(target){
@@ -289,10 +290,10 @@ function enemyAI(e,dt,isBoss=false){
  if(!e.alive)return;
  e.cooldown=Math.max(0,e.cooldown-dt);
  const d=e.group.position.distanceTo(player.position);
- const alertRange=isBoss?22:9;
+ const alertRange=isBoss?18:8;
  if(d<alertRange)e.alert=true;
  if(!e.alert){e.group.rotation.y=Math.sin(performance.now()*.0005)*.15;return;}
- if(d>(isBoss?2.8:1.8)){
+ if(d>(isBoss?2.05:1.25)){
   const dir=player.position.clone().sub(e.group.position);dir.y=0;dir.normalize();
   const speed=isBoss?1.65:1.05;
   const nextX=e.group.position.x+dir.x*speed*dt;

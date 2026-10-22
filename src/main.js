@@ -309,12 +309,6 @@ function requestPointerLock(){renderer.domElement.requestPointerLock?.();}
 $('start-button').addEventListener('click',resetGame);
 $('resume-button').addEventListener('click',()=>{paused=false;$('pause-menu').classList.add('hidden');requestPointerLock();});
 $('restart-button').addEventListener('click',resetGame);
-$('rest-button').addEventListener('click',()=>{
- if(player.position.distanceTo(bonfire.position)<3.1){
-  health=100;stamina=100;bonfireLit=true;
-  fireLight.intensity=6;showToast('FOGO ACESO · VIDA RESTAURADA');
- }else showToast('APROXIME-SE DA FOGUEIRA');
-});
 document.addEventListener('pointerlockchange',()=>{
  if(!document.pointerLockElement&&started&&!paused&&!dead){paused=true;$('pause-menu').classList.remove('hidden');}
 });

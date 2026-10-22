@@ -211,16 +211,21 @@ function makeUndead(x,z){
 undeads.push(makeUndead(-5, -9),makeUndead(6,-20),makeUndead(-7,-31));
 
 const keysHeld=new Set();
-function hitTest(x,z){
+function hitTest(x,z,radius=playerRadius,height=1.85){
  for(const c of colliders){
-  if(Math.abs(x-c.x)<c.hx+playerRadius && Math.abs(z-c.z)<c.hz+playerRadius) return true;
+  // Geometry above the character (such as an arch lintel) must not become an invisible wall.
+  if(c.maxY < 0 || c.minY > height) continue;
+  const closestX=THREE.MathUtils.clamp(x,c.x-c.hx,c.x+c.hx);
+  const closestZ=THREE.MathUtils.clamp(z,c.z-c.hz,c.z+c.hz);
+  const dx=x-closestX,dz=z-closestZ;
+  if(dx*dx+dz*dz<radius*radius) return true;
  }
  return false;
 }
-function moveWithCollision(obj,dx,dz){
+function moveWithCollision(obj,dx,dz,radius=playerRadius){
  const nx=obj.position.x+dx,nz=obj.position.z+dz;
- if(!hitTest(nx,obj.position.z)) obj.position.x=nx;
- if(!hitTest(obj.position.x,nz)) obj.position.z=nz;
+ if(!hitTest(nx,obj.position.z,radius)) obj.position.x=nx;
+ if(!hitTest(obj.position.x,nz,radius)) obj.position.z=nz;
 }
 function updateCamera(dt){
  const target=new THREE.Vector3(player.position.x,player.position.y+1.45,player.position.z);
@@ -255,13 +260,13 @@ function damagePlayer(amount){
 function attack(){
  if(!started||paused||dead||attackTimer>0||stamina<15)return;
  attackTimer=.55;stamina-=15;
- swordArm.rotation.x=-1.8;
+ swordArm.rotation.z=-1.25;
  let target=null,dist=4.2;
  const candidates=[...(enemy.alive?[enemy]:[]),...undeads.filter(e=>e.alive)];
  for(const e of candidates){
   const d=player.position.distanceTo(e.group.position);
   if(d<dist){const dir=new THREE.Vector3(e.group.position.x-player.position.x,0,e.group.position.z-player.position.z).normalize();
-   const facing=new THREE.Vector3(Math.sin(yaw),0,Math.cos(yaw));
+   const facing=new THREE.Vector3(-Math.sin(yaw),0,-Math.cos(yaw));
    if(dir.dot(facing)>.1){target=e;dist=d;}
   }
  }
@@ -273,7 +278,7 @@ function attack(){
 function dodge(){
  if(!started||paused||dead||dodgeTimer>0||stamina<24)return;
  dodgeTimer=.42;invuln=.5;stamina-=24;
- const forward=new THREE.Vector3(Math.sin(yaw),0,Math.cos(yaw));
+ const forward=new THREE.Vector3(-Math.sin(yaw),0,-Math.cos(yaw));
  let dx=0,dz=0;
  if(keys.KeyS){dx=-forward.x;dz=-forward.z;}else{dx=forward.x;dz=forward.z;}
  if(keys.KeyA){dx=-Math.cos(yaw);dz=Math.sin(yaw);}
@@ -290,8 +295,12 @@ function enemyAI(e,dt,isBoss=false){
  if(d>(isBoss?2.8:1.8)){
   const dir=player.position.clone().sub(e.group.position);dir.y=0;dir.normalize();
   const speed=isBoss?1.65:1.05;
-  e.group.position.addScaledVector(dir,speed*dt);
+  const nextX=e.group.position.x+dir.x*speed*dt;
+  const nextZ=e.group.position.z+dir.z*speed*dt;
+  if(!hitTest(nextX,e.group.position.z,isBoss?.62:.34,3.2)) e.group.position.x=nextX;
+  if(!hitTest(e.group.position.x,nextZ,isBoss?.62:.34,3.2)) e.group.position.z=nextZ;
   e.group.rotation.y=Math.atan2(dir.x,dir.z);
+  e.group.position.y=Math.sin(performance.now()*.009+(isBoss?0:1))*0.025;
  }else if(e.cooldown<=0){
   e.cooldown=isBoss?1.75:1.45;
   if(dodgeTimer<=0)damagePlayer(isBoss?24:12);
@@ -352,7 +361,8 @@ function animate(){
  emberParticles.forEach(p=>{p.mesh.position.y=p.base.y+(time*p.speed%1.8);p.mesh.position.x=p.base.x+Math.sin(time*2+p.speed)*.15;});
  if(started&&!paused&&!dead){
   invuln=Math.max(0,invuln-dt);attackTimer=Math.max(0,attackTimer-dt);dodgeTimer=Math.max(0,dodgeTimer-dt);
-  if(attackTimer===0)swordArm.rotation.x=THREE.MathUtils.damp(swordArm.rotation.x,0,14,dt);
+  if(attackTimer===0)swordArm.rotation.z=THREE.MathUtils.damp(swordArm.rotation.z,0,14,dt);
+  else swordArm.rotation.z=-1.25*Math.sin(Math.PI*(1-attackTimer/.55));
   const moving=keys.KeyW||keys.KeyS||keys.KeyA||keys.KeyD||keys.ArrowUp||keys.ArrowDown;
   let dx=0,dz=0;
   const f=new THREE.Vector3(-Math.sin(yaw),0,-Math.cos(yaw));
@@ -362,8 +372,8 @@ function animate(){
   if(keys.KeyA||keys.ArrowLeft){dx-=r.x;dz-=r.z;}
   if(keys.KeyD||keys.ArrowRight){dx+=r.x;dz+=r.z;}
   const len=Math.hypot(dx,dz);
-  if(len){const speed=keys.ShiftLeft||keys.ShiftRight?7.2:4.2;moveWithCollision(player,dx/len*speed*dt,dz/len*speed*dt);playerBody.position.y=Math.abs(Math.sin(time*11))*0.045;legs[0].rotation.x=Math.sin(time*11)*.5;legs[1].rotation.x=-Math.sin(time*11)*.5;if(speed>5&&stamina>0)stamina=Math.max(0,stamina-22*dt);}
-  else {playerBody.position.y=THREE.MathUtils.damp(playerBody.position.y,0,10,dt);legs.forEach(l=>l.rotation.x=THREE.MathUtils.damp(l.rotation.x,0,10,dt));}
+  if(len){const speed=(keys.ShiftLeft||keys.ShiftRight)&&stamina>0?7.2:4.2;moveWithCollision(player,dx/len*speed*dt,dz/len*speed*dt);playerBody.rotation.y=yaw;playerBody.position.y=Math.abs(Math.sin(time*(speed>5?15:11)))*0.045;legs[0].rotation.x=Math.sin(time*(speed>5?15:11))*.5;legs[1].rotation.x=-Math.sin(time*(speed>5?15:11))*.5;if(speed>5)stamina=Math.max(0,stamina-22*dt);}
+  else {playerBody.rotation.y=yaw;playerBody.position.y=THREE.MathUtils.damp(playerBody.position.y,0,10,dt);legs.forEach(l=>l.rotation.x=THREE.MathUtils.damp(l.rotation.x,0,10,dt));}
   stamina=Math.min(100,stamina+(moving?5:17)*dt);
   enemyAI(enemy,dt,true);undeads.forEach(e=>enemyAI(e,dt,false));
   updateCamera(dt);updateHud();

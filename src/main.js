@@ -78,6 +78,8 @@ function rubble(x,y,z,scale=1) {
 function tree(x,z,h=7) {
   const trunk=cylinder(x,h*.34,z,.18,.3,h*.7,mats.stoneDark,6,false);
   trunk.rotation.z=(Math.random()-.5)*.2;
+  // The trunk is solid even though its branches and dead needles are decorative.
+  colliders.push({x,z,hx:.34,hz:.34,minY:0,maxY:h*.7});
   for(let i=0;i<5;i++){
     const b=cylinder(x+(Math.random()-.5)*1.4,h*(.55+i*.07),z+(Math.random()-.5)*1.4,.035,.14,h*.32,mats.stoneDark,5,false);
     b.rotation.z=(Math.random()-.5)*1.1;b.rotation.x=(Math.random()-.5)*.8;
@@ -253,16 +255,27 @@ function hitTest(x,z,radius=playerRadius,height=1.85){
  }
  return false;
 }
+function overlapsLivingEnemy(x,z,radius){
+ const entities=[...(enemy.alive?[{x:enemy.group.position.x,z:enemy.group.position.z,r:.82}]:[]),
+  ...undeads.filter(e=>e.alive).map(e=>({x:e.group.position.x,z:e.group.position.z,r:.43}))];
+ return entities.some(e=>(x-e.x)*(x-e.x)+(z-e.z)*(z-e.z)<(radius+e.r)*(radius+e.r));
+}
+function canOccupy(obj,x,z,radius){
+ if(hitTest(x,z,radius))return false;
+ // Only the player is blocked by enemies; enemy AI still uses terrain collision.
+ if(obj===player&&overlapsLivingEnemy(x,z,radius))return false;
+ return true;
+}
 function moveWithCollision(obj,dx,dz,radius=playerRadius){
- // Substeps prevent fast movement and dodge impulses from tunnelling through thin walls.
+ // Small substeps prevent fast movement and dodges from tunnelling through thin obstacles.
  const distance=Math.hypot(dx,dz);
- const steps=Math.max(1,Math.ceil(distance/Math.max(.12,radius*.35)));
+ const steps=Math.max(1,Math.ceil(distance/Math.max(.12,radius*.3)));
  const sx=dx/steps,sz=dz/steps;
  for(let i=0;i<steps;i++){
   const nx=obj.position.x+sx;
-  if(!hitTest(nx,obj.position.z,radius)) obj.position.x=nx;
+  if(canOccupy(obj,nx,obj.position.z,radius)) obj.position.x=nx;
   const nz=obj.position.z+sz;
-  if(!hitTest(obj.position.x,nz,radius)) obj.position.z=nz;
+  if(canOccupy(obj,obj.position.x,nz,radius)) obj.position.z=nz;
  }
 }
 function updateCamera(dt){

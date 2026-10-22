@@ -48,9 +48,11 @@ function box(x,y,z,sx,sy,sz,material, collide=true, cast=true) {
   if(collide) colliders.push({x,z,hx:sx/2,hz:sz/2,minY:y-sy/2,maxY:y+sy/2});
   return mesh;
 }
-function stone(x,y,z,sx,sy,sz,material=mats.stone) {
+function stone(x,y,z,sx,sy,sz,material=mats.stone,collide=false) {
   const m=box(x,y,z,sx,sy,sz,material,false);
   m.rotation.y=(Math.random()-.5)*.22;
+  // Only substantial terrain stones block movement; small decorative stones remain passable.
+  if(collide) colliders.push({x,z,hx:sx*.56,hz:sz*.56,minY:y-sy/2,maxY:y+sy/2});
   return m;
 }
 function cylinder(x,y,z,r1,r2,h,material,segments=7,collide=false) {

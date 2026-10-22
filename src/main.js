@@ -103,7 +103,7 @@ for(let z=19;z>-65;z-=1.55){
 // Irregular stone banks define the path without closing it with invisible collision planes.
 for(const side of [-1,1])for(let z=15;z>-44;z-=2.7){
  const x=pathX(z)+side*(6+Math.random()*2.5),h=1.2+Math.random()*3.3;
- stone(x,h/2,z,1.4+Math.random()*2.2,h,1.8+Math.random()*2.2,Math.random()>.35?mats.stoneDark:mats.stone);
+ stone(x,h/2,z,1.4+Math.random()*2.2,h,1.8+Math.random()*2.2,Math.random()>.35?mats.stoneDark:mats.stone,true);
  if(Math.random()<.45)rubble(x,h*.55,z,.7+Math.random()*.6);
 }
 // Graves and dead trees are placed in readable clusters away from the center lane.
@@ -141,7 +141,7 @@ for(let x=-11;x<=10;x+=2.15)for(let z=-48;z>=-64;z-=2.15){
 }
 for(const side of [-1,1])for(let z=-49;z>=-63;z-=3.8){
  const x=arenaX+side*(11+Math.random()*1.4),h=2.5+Math.random()*3.4;
- stone(x,h/2,z,1.6,h,2.1,mats.stoneDark);
+ stone(x,h/2,z,1.6,h,2.1,mats.stoneDark,true);
  if(Math.random()<.65)stone(x,h+.35,z,.7,.7,.8,mats.stone);
 }
 for(let i=0;i<18;i++)rubble(arenaX+(Math.random()-.5)*21,.05,-48-Math.random()*15,.8+Math.random()*.7);
@@ -149,7 +149,7 @@ for(let i=0;i<18;i++)rubble(arenaX+(Math.random()-.5)*21,.05,-48-Math.random()*1
 for(const side of [-1,1]){
  box(arenaX+side*7,2.8,-65,1.1,5.6,1.2,mats.stoneDark,true);
  box(arenaX+side*7,5.8,-65,1.8,.4,1.8,mats.stone,true);
- for(let i=0;i<4;i++)stone(arenaX+side*(7+i*1.25),1.7,-67,1.05,3.4,1.1,mats.stoneDark);
+ for(let i=0;i<4;i++)stone(arenaX+side*(7+i*1.25),1.7,-67,1.05,3.4,1.1,mats.stoneDark,true);
 }
 box(arenaX,5.2,-65,15,.8,1.4,mats.stoneDark,true);
 for(let x=-6;x<=6;x+=2.3)stone(arenaX+x,6.1,-65,1.05,1.8,1.1,mats.stoneDark);
@@ -254,9 +254,16 @@ function hitTest(x,z,radius=playerRadius,height=1.85){
  return false;
 }
 function moveWithCollision(obj,dx,dz,radius=playerRadius){
- const nx=obj.position.x+dx,nz=obj.position.z+dz;
- if(!hitTest(nx,obj.position.z,radius)) obj.position.x=nx;
- if(!hitTest(obj.position.x,nz,radius)) obj.position.z=nz;
+ // Substeps prevent fast movement and dodge impulses from tunnelling through thin walls.
+ const distance=Math.hypot(dx,dz);
+ const steps=Math.max(1,Math.ceil(distance/Math.max(.12,radius*.35)));
+ const sx=dx/steps,sz=dz/steps;
+ for(let i=0;i<steps;i++){
+  const nx=obj.position.x+sx;
+  if(!hitTest(nx,obj.position.z,radius)) obj.position.x=nx;
+  const nz=obj.position.z+sz;
+  if(!hitTest(obj.position.x,nz,radius)) obj.position.z=nz;
+ }
 }
 function updateCamera(dt){
  const target=new THREE.Vector3(player.position.x,player.position.y+1.45,player.position.z);

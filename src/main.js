@@ -86,55 +86,65 @@ function tree(x,z,h=7) {
     shard.rotation.z=(Math.random()-.5)*1.8;scene.add(shard);
   }
 }
-// Winding, broken path through the ash cemetery.
-for(let z=-48;z<24;z+=2.3){
-  const x=Math.sin(z*.12)*2.1;
-  const slab=box(x+(Math.random()-.5)*.65,-.01,z,1.9+Math.random()*1.3,.18,1.7,mats.dirt,false,false);
-  slab.rotation.y=(Math.random()-.5)*.12;
+// A continuous route from the first bonfire through a narrowing graveyard and into the boss courtyard.
+const pathPoints=[[0,18],[0,12],[.5,6],[1.2,0],[1.8,-7],[2.8,-14],[3.4,-20],[2.6,-27],[1.2,-34],[.3,-41],[-.5,-47],[-.5,-54],[-.5,-63]];
+function pathX(z){
+ for(let i=0;i<pathPoints.length-1;i++){const a=pathPoints[i],b=pathPoints[i+1];if(z<=a[1]&&z>=b[1])return THREE.MathUtils.lerp(a[0],b[0],(a[1]-z)/(a[1]-b[1]));}
+ return z>18?0:-.5;
 }
-for(let i=0;i<115;i++){
-  const z=-47+Math.random()*72;
-  const x=(Math.random()-.5)*48;
-  if(Math.abs(x-Math.sin(z*.12)*2)<3.5) continue;
-  if(Math.abs(z+11)<5&&Math.abs(x)<8) continue;
-  if(Math.random()<.68) grave(x,z,.65+Math.random()*.8,(Math.random()-.5)*.18);
-  else rubble(x,-.05,z,.7+Math.random());
+for(let z=19;z>-65;z-=1.55){
+ const x=pathX(z);
+ const slab=box(x+(Math.random()-.5)*.3,-.04,z,2.8+Math.random()*1.1,.16,1.6+Math.random()*.45,mats.dirt,false,false);
+ slab.rotation.y=(Math.random()-.5)*.07;
+ if(Math.random()<.3)stone(x+(Math.random()-.5)*1.6,.04,z+(Math.random()-.5)*.7,.5+Math.random()*.7,.08,.45,mats.stoneDark);
 }
-for(let i=0;i<38;i++){
-  const z=-43+Math.random()*65,x=(Math.random()>.5?1:-1)*(15+Math.random()*24);
-  tree(x,z,5+Math.random()*8);
+// Irregular stone banks define the path without closing it with invisible collision planes.
+for(const side of [-1,1])for(let z=15;z>-44;z-=2.7){
+ const x=pathX(z)+side*(6+Math.random()*2.5),h=1.2+Math.random()*3.3;
+ stone(x,h/2,z,1.4+Math.random()*2.2,h,1.8+Math.random()*2.2,Math.random()>.35?mats.stoneDark:mats.stone);
+ if(Math.random()<.45)rubble(x,h*.55,z,.7+Math.random()*.6);
 }
-// Distant ruined walls and broken gothic arches frame the route.
-for(let side of [-1,1]){
-  for(let i=0;i<12;i++){
-    const z=-42+i*5.8,x=side*(17+Math.random()*3),h=2+Math.random()*4;
-    stone(x,h/2,z,1.3,h,2.2,i%3?mats.stoneDark:mats.stone);
-    if(i%3===0) rubble(x,h,z,.8);
-  }
+// Graves and dead trees are placed in readable clusters away from the center lane.
+for(let i=0;i<82;i++){
+ const z=13-Math.random()*56,side=Math.random()<.5?-1:1;
+ const x=pathX(z)+side*(4.7+Math.random()*15);
+ if(z<-44&&Math.abs(x-pathX(z))<9)continue;
+ if(Math.random()<.75)grave(x,z,.62+Math.random()*.85,(Math.random()-.5)*.2);else rubble(x,-.05,z,.7+Math.random()*.8);
 }
-function arch(x,z,scale=1) {
-  const w=5.5*scale,h=6.5*scale;
-  box(x-w/2+.35*scale,h/2,z,.7*scale,h,1.1*scale,mats.stoneDark,true);
-  box(x+w/2-.35*scale,h/2,z,.7*scale,h,1.1*scale,mats.stoneDark,true);
-  box(x,h-.2*scale,z,w,.65*scale,1.3*scale,mats.stone,true);
-  for(let s of [-1,1]) for(let i=0;i<3;i++) stone(x+s*w/2,h+(.5+i*.5)*scale,z,1.1*scale,.4*scale,1.2*scale,mats.stoneDark);
+for(let i=0;i<32;i++){const z=12-Math.random()*55,side=Math.random()<.5?-1:1;tree(pathX(z)+side*(12+Math.random()*18),z,5+Math.random()*8);}
+// Collapsed steps and a broken arch establish the first landmark.
+for(let i=0;i<5;i++)box(pathX(15-i*1.1),-.03+i*.1,15-i*1.1,3.6-i*.25,.18,1.1,mats.stoneDark,false,false);
+arch(pathX(-4),-4,.82);
+// Ruined gate between the cemetery and the arena.
+for(const side of [-1,1]){
+ const x=pathX(-43)+side*4.2;
+ box(x,2.5,-43,1.1,5,1.25,mats.stoneDark,true);
+ box(x,5.15,-43,1.6,.35,1.7,mats.stone,true);
+ for(let k=0;k<3;k++)stone(x+side*(.4+k*.35),5.7+k*.28,-43,.6,.8,.75,mats.stoneDark);
 }
-arch(0,-28,1.15);
-for(let i=0;i<18;i++) rubble((Math.random()-.5)*12,Math.random()*.6,-29+Math.random()*5,1.1);
-// Chapel ruin visible beyond the boss arena.
-for(let side of [-1,1]){
-  box(side*7,2.3,-49,1.1,4.6,1.1,mats.stoneDark,true);
-  box(side*7,4.8,-49,1.7,.4,1.7,mats.stone,true);
-  for(let i=0;i<3;i++) box(side*(7+i*1.4),1.5,-53,1.1,3,1,mats.stoneDark,true);
+box(pathX(-43),5.1,-43,8.7,.65,1.35,mats.stoneDark,true);
+for(let i=0;i<8;i++)rubble(pathX(-43)+(Math.random()-.5)*10,.08,-42+Math.random()*3,.65+Math.random()*.6);
+// Broad courtyard with cracked paving and broken perimeter walls; keep the center clear for combat.
+const arenaX=-.5;
+for(let x=-11;x<=10;x+=2.15)for(let z=-48;z>=-64;z-=2.15){
+ const slab=box(arenaX+x+(Math.random()-.5)*.25,-.105,z+(Math.random()-.5)*.25,2+Math.random()*.3,.18,2+Math.random()*.3,mats.stoneDark,false,false);
+ slab.rotation.y=(Math.random()-.5)*.05;
 }
-box(0,4.2,-53,15,.7,1.2,mats.stoneDark,true);
-for(let x=-6;x<=6;x+=2.4) stone(x,5.5,-53,1.1,2,.9,mats.stoneDark);
-for(let i=0;i<26;i++) rubble((Math.random()-.5)*18,.1,-51+Math.random()*7,.8);
-for(let i=0;i<26;i++){
-  const x=(Math.random()-.5)*15,z=-39-Math.random()*12;
-  const m=new THREE.Mesh(new THREE.DodecahedronGeometry(.08+Math.random()*.12,0),mats.bone);
-  m.position.set(x,.15+Math.random()*.6,z);scene.add(m);
+for(const side of [-1,1])for(let z=-49;z>=-63;z-=3.8){
+ const x=arenaX+side*(11+Math.random()*1.4),h=2.5+Math.random()*3.4;
+ stone(x,h/2,z,1.6,h,2.1,mats.stoneDark);
+ if(Math.random()<.65)stone(x,h+.35,z,.7,.7,.8,mats.stone);
 }
+for(let i=0;i<18;i++)rubble(arenaX+(Math.random()-.5)*21,.05,-48-Math.random()*15,.8+Math.random()*.7);
+// Ruined chapel silhouette at the far end.
+for(const side of [-1,1]){
+ box(arenaX+side*7,2.8,-65,1.1,5.6,1.2,mats.stoneDark,true);
+ box(arenaX+side*7,5.8,-65,1.8,.4,1.8,mats.stone,true);
+ for(let i=0;i<4;i++)stone(arenaX+side*(7+i*1.25),1.7,-67,1.05,3.4,1.1,mats.stoneDark);
+}
+box(arenaX,5.2,-65,15,.8,1.4,mats.stoneDark,true);
+for(let x=-6;x<=6;x+=2.3)stone(arenaX+x,6.1,-65,1.05,1.8,1.1,mats.stoneDark);
+for(let i=0;i<34;i++){const m=new THREE.Mesh(new THREE.DodecahedronGeometry(.07+Math.random()*.16,0),mats.bone);m.position.set(arenaX+(Math.random()-.5)*19,.1+Math.random()*.55,-47-Math.random()*17);m.rotation.set(Math.random(),Math.random(),Math.random());scene.add(m);}
 
 // Bonfire: the first safe point and the visual anchor of the opening area.
 const bonfire=new THREE.Group();bonfire.position.set(-3,0,5);scene.add(bonfire);
@@ -180,25 +190,37 @@ let yaw=0, pitch=-.12, cameraDistance=5.7, cameraHeight=2.55;
 let started=false, paused=false, dead=false, locked=false, bonfireLit=false;
 const keys={};
 let health=100, stamina=100, souls=0, attackTimer=0,dodgeTimer=0, invuln=0, enemyAttack=0;
-const enemy={group:new THREE.Group(),hp:100,maxHp:100,alive:true,state:'idle',timer:0,attackCooldown:0,home:new THREE.Vector3(0,0,-35)};
+const enemy={group:new THREE.Group(),hp:180,maxHp:180,alive:true,state:'dormant',timer:0,attackCooldown:0,home:new THREE.Vector3(-.5,0,-57),alert:false};
 scene.add(enemy.group);
+let bossAwakened=false,bossWakeTimer=0;
 function buildBoss(){
  const g=enemy.group;g.position.copy(enemy.home);
- part(g,new THREE.CylinderGeometry(.38,.55,1.35,8),mats.iron,0,1.35,0);
- part(g,new THREE.SphereGeometry(.42,8,7),mats.stoneDark,0,2.25,0,1,1.15,1);
- part(g,new THREE.ConeGeometry(.42,.75,7),mats.iron,0,2.7,0);
- part(g,new THREE.BoxGeometry(1.25,.28,.5),mats.iron,0,1.85,0);
- for(const x of [-.48,.48]){
-  part(g,new THREE.BoxGeometry(.24,.9,.28),mats.iron,x,1.35,0);
-  part(g,new THREE.BoxGeometry(.22,.85,.25),mats.rust,x*.65,.5,0);
-  part(g,new THREE.BoxGeometry(.32,.2,.5),mats.iron,x*.65,.12,-.08);
+ // Tall, layered armor, broad shoulders, torn mantle and a long halberd.
+ part(g,new THREE.CylinderGeometry(.46,.62,1.5,9),mats.iron,0,1.55,0);
+ part(g,new THREE.SphereGeometry(.43,9,7),mats.stoneDark,0,2.48,0,1,1.18,.95);
+ part(g,new THREE.ConeGeometry(.42,.75,8),mats.iron,0,2.92,-.02);
+ part(g,new THREE.BoxGeometry(1.4,.3,.55),mats.iron,0,2.05,0);
+ part(g,new THREE.BoxGeometry(.78,.72,.18),mats.rust,0,1.52,.32,1,1,.4);
+ for(const side of [-1,1]){
+  const shoulder=part(g,new THREE.SphereGeometry(.34,7,6),mats.iron,side*.62,2.05,0,1.25,.82,1);shoulder.rotation.z=side*.15;
+  part(g,new THREE.BoxGeometry(.24,.8,.3),mats.iron,side*.58,1.48,0);
+  part(g,new THREE.BoxGeometry(.25,.72,.27),mats.rust,side*.52,.67,0);
+  part(g,new THREE.BoxGeometry(.38,.2,.5),mats.iron,side*.52,.2,-.08);
+  part(g,new THREE.BoxGeometry(.24,.22,.25),mats.gold,side*.62,1.85,-.02);
  }
- const spear=part(g,new THREE.CylinderGeometry(.055,.055,3.3,6),mats.rust,.72,1.5,-.2);
- spear.rotation.z=-.22;
- const tip=part(g,new THREE.ConeGeometry(.13,.48,6),mats.iron,.35,3.2,-.2);tip.rotation.z=-.22;
- for(let i=0;i<5;i++) part(g,new THREE.ConeGeometry(.16,.5,5),mats.stoneDark,(Math.random()-.5)*.5,2.2+Math.random()*.5,-.35);
+ for(let i=0;i<5;i++){const strip=part(g,new THREE.BoxGeometry(.2+Math.random()*.18,1.15+Math.random()*.45,.08),mats.cloth,(i-2)*.19,1.05,.42);strip.rotation.z=(i-2)*-.09;}
+ const shaft=part(g,new THREE.CylinderGeometry(.055,.075,3.8,7),mats.rust,.83,1.8,-.22);shaft.rotation.z=-.25;
+ const blade=part(g,new THREE.BoxGeometry(.58,.75,.13),mats.iron,.36,3.25,-.22);blade.rotation.z=-.25;
+ const spike=part(g,new THREE.ConeGeometry(.14,.55,7),mats.stoneLight,.28,3.83,-.22);spike.rotation.z=-.25;
+ for(let i=0;i<7;i++)part(g,new THREE.ConeGeometry(.13,.4,5),(i%2?mats.iron:mats.stoneDark),(Math.random()-.5)*.65,2.3+Math.random()*.55,-.36);
 }
 buildBoss();
+enemy.group.rotation.x=1.15;
+enemy.group.scale.set(.92,.92,.92);
+const coiledSword=new THREE.Group();coiledSword.position.set(-.5,1.4,-56.1);coiledSword.rotation.x=.25;scene.add(coiledSword);
+const coiledBlade=new THREE.Mesh(new THREE.BoxGeometry(.09,.95,.12),mats.stoneLight);coiledBlade.position.y=.35;coiledBlade.rotation.z=-.2;coiledSword.add(coiledBlade);
+const coiledGuard=new THREE.Mesh(new THREE.BoxGeometry(.42,.09,.16),mats.gold);coiledGuard.position.set(0,-.08,0);coiledSword.add(coiledGuard);
+const swordGlow=new THREE.PointLight(0xb4c7c9,.75,3);swordGlow.position.set(-.5,1.6,-56.1);scene.add(swordGlow);
 const undeads=[];
 function makeUndead(x,z){
  const g=new THREE.Group();g.position.set(x,0,z);scene.add(g);
@@ -208,7 +230,7 @@ function makeUndead(x,z){
  const blade=part(g,new THREE.BoxGeometry(.06,.7,.06),mats.stoneLight,.32,.45,0);blade.rotation.z=-.25;
  return {group:g,hp:35,alive:true,cooldown:0,home:new THREE.Vector3(x,0,z),alert:false};
 }
-undeads.push(makeUndead(-5, -9),makeUndead(6,-20),makeUndead(-7,-31));
+undeads.push(makeUndead(-4.2,-10),makeUndead(6.4,-23),makeUndead(-7.1,-34),makeUndead(5.7,-39));
 
 const keysHeld=new Set();
 function hitTest(x,z,radius=playerRadius,height=1.85){
